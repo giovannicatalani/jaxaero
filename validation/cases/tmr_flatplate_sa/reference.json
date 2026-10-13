@@ -1,0 +1,35 @@
+{
+    "suite": "rans",
+    "order": 1,
+    "notes": "The verification gate before the airfoil: SA implemented correctly means Cf and CD tend to the CFL3D/FUN3D values as the grid is refined.",
+    "levels": [
+        {
+            "file": "data/grids/flatplate_clust2_4levelsdown_35x25.p2dfmt"
+        },
+        {
+            "file": "data/grids/flatplate_clust2_3levelsdown_69x49.p2dfmt"
+        },
+        {
+            "file": "data/grids/flatplate_clust2_2levelsdown_137x97.p2dfmt"
+        }
+    ],
+    "reference": {
+        "cl": null,
+        "cd": 0.00285985,
+        "cd_spread": 7.4e-06,
+        "cd_tol": 0.02,
+        "cf_x": 0.97008,
+        "cf": 0.00270562,
+        "cf_tol": 0.01,
+        "isolates": "the SA model on a canonical boundary layer: law of the wall, Cf",
+        "sources": [
+            "https://tmbwg.github.io/turbmodels/flatplate_sa.html",
+            "validation/references/tmr_flatplate/cf_convergence.dat, drag_convergence.dat"
+        ],
+        "notes": "CFL3D on the 545x385 grid; FUN3D gives Cf 0.00270540, CD 0.00285247. Per grid, CFL3D at 137x97: Cf 0.00271115, CD 0.00286621; at 69x49: 0.00272835, 0.00288438; at 35x25: 0.00279569, 0.00295438. The tolerances are about CFL3D's own distance from its finest value at 137x97."
+    },
+    "settled_cl_spread": 1e-06,
+    "gallery": {
+        "fields": false
+    }
+}

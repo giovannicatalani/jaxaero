@@ -1,0 +1,38 @@
+{
+    "general": {
+        "case_name": "nparc_rae2822_case6",
+        "description": "RAE 2822 AGARD AR-138 case 6, corrected conditions, SA-noft2, M 0.729, alpha 2.31 deg, Re 6.5e6"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/rae2822_nparc.x.fmt",
+        "notes": "NPARC study 1/4 C-grid, 369 x 65 nodes, wall spacing 1e-5 c, far field 20-38 chords, wake cut along the trailing-edge bisector; not tracked, see data/grids/README.md."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field",
+            "model": "point_vortex"
+        },
+        "notes": "Point vortex: the far field is 20-38 chords. Measured (van_albada, this grid): plain characteristic CL 0.69717, CD 0.013400, shock 0.540, Cp rms vs WIND 3.4e-2 upper; with the point vortex CL 0.72118, CD 0.012452, shock 0.5455 (WIND 0.5455), Cp rms 7.0e-3."
+    },
+    "freestream": {
+        "mach": 0.729,
+        "alpha_deg": 2.31,
+        "reynolds": 6500000.0,
+        "temperature": 460.0,
+        "notes": "Wind-tunnel-corrected case 6 (nominal M 0.725, alpha 2.92), as NPARC runs it; 460 R is NPARC's static temperature."
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

@@ -1,0 +1,45 @@
+{
+    "suite": "generated",
+    "order": 3,
+    "levels": [
+        {
+            "cells_airfoil": 128,
+            "cells_wake": 48,
+            "cells_normal": 64,
+            "wall_spacing": 3.7e-06,
+            "leading_edge_spacing": 0.00043,
+            "trailing_edge_spacing": 0.0043
+        },
+        {
+            "cells_airfoil": 256,
+            "cells_wake": 96,
+            "cells_normal": 128,
+            "wall_spacing": 1.7e-06,
+            "leading_edge_spacing": 0.000215,
+            "trailing_edge_spacing": 0.00215
+        },
+        {
+            "cells_airfoil": 512,
+            "cells_wake": 192,
+            "cells_normal": 256,
+            "wall_spacing": 8.5e-07,
+            "leading_edge_spacing": 0.0001075,
+            "trailing_edge_spacing": 0.001075
+        }
+    ],
+    "reference": {
+        "cl": 1.091,
+        "cd": 0.012273,
+        "cl_spread": 0.0002,
+        "cd_spread": 2.5e-06,
+        "cl_tol": 0.01,
+        "cd_tol": 0.05,
+        "isolates": "SA at moderate lift: the reference case, with grid-converged values",
+        "sources": [
+            "https://tmbwg.github.io/turbmodels/naca0012numerics_val_sa_withoutpv.html; validation/references/tmr_naca0012/cfl3d_results_sa_nopv_withN.dat",
+            "https://tmbwg.github.io/turbmodels/naca0012_val_sa.html (seven codes, 897x257, point-vortex far field)"
+        ],
+        "notes": "Grid-converged without point vortex (as here, plain Riemann invariants), family II, CFL3D/FUN3D/TAU: CL 1.09085-1.09103, CD 0.0122715-0.0122740. Per mesh, CFL3D family I (these grids): 225x65 CL 1.08357 CD 0.014532; 449x129 CL 1.09061 CD 0.012775; 897x257 CL 1.09112 CD 0.012371. Judge each level against CFL3D's on that level: cd_tol 5% is what CFL3D itself needs at 449x129. Here: the same physics on generated grids, the check of the generator; compare level by level with tmr_naca0012_sa_a10 on TMR's grids (this solver, 449x129: CL 1.09050, CD 0.012777)."
+    },
+    "settled_cl_spread": 0.0001
+}

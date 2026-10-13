@@ -1,0 +1,25 @@
+{
+    "general": {
+        "case_name": "30p30n_sa",
+        "description": "30P30N three-element high-lift airfoil, SA RANS: M 0.17, alpha 5.5 deg, Re 1.71e6"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/2Ddomain_L1_coarse_r1.p3d",
+        "coordinate_scale": 0.05555555555555555,
+        "notes": "JAXA's 117-block Plot3D grid, coarsest level, in inches; 1/18 turns it into stowed chords. Download: data/grids/README.md."
+    },
+    "freestream": {
+        "mach": 0.17,
+        "alpha_deg": 5.5,
+        "reynolds": 1710000.0,
+        "temperature": 295.56
+    },
+    "material_properties": {
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 110.4
+    },
+    "turbulence": {
+        "model": "sa_noft2"
+    }
+}

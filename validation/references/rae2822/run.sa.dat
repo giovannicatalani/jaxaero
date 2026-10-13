@@ -1,0 +1,27 @@
+RAE 2822, Two-Dimensional Transonic Turbulent Flow
+M_infty = 0.729, alpha = 2.31 deg.
+369 x 65, C-grid.  raetaf.dat
+
+freestream static 0.729 15.80734 460.0 2.31 0.0
+downstream pressure freestream zone 1
+
+turbulence model spalart allmaras
+
+implicit boundary on
+dq limiter on
+
+loads
+   zone 1
+   print totals zones lift frequency 10
+   reference area 1
+   reference length 1.0
+   reference moment center 0.0 0.0 0.0
+   subset i 33 337 j 1 1 k 1 1 force noslip
+endloads
+
+converge order 9
+cycles 500
+iterations per cycle 10 print frequency 5
+cfl 5.0
+
+end

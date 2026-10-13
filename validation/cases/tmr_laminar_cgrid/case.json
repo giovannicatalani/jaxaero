@@ -1,0 +1,29 @@
+{
+    "general": {
+        "case_name": "tmr_laminar_cgrid",
+        "description": "Topology cross-check, C-grid: laminar C1.2 conditions on the TMR NACA 0012 and TMR's own C-grids"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/n0012_449-129.p2dfmt.gz",
+        "notes": "TMR's RANS grids (https://turbmodels.larc.nasa.gov/naca0012_grids.html), wall spacing ~4e-6 chords, far field ~500 chords. Not tracked in git: see data/grids/README.md."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.5,
+        "alpha_deg": 1.0,
+        "reynolds": 5000.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "constant",
+        "prandtl_number": 0.72
+    }
+}

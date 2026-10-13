@@ -1,0 +1,45 @@
+{
+    "general": {
+        "case_name": "gen_rae2822_case6",
+        "description": "RAE 2822 AGARD AR-138 case 6, corrected conditions, SA-noft2, on generated C-grids from the measured ordinates"
+    },
+    "domain": {
+        "grid": "c_grid",
+        "airfoil": "../../references/rae2822/rae2822.dat",
+        "cells_airfoil": 256,
+        "cells_wake": 64,
+        "cells_normal": 128,
+        "wall_spacing": 2e-06,
+        "far_field": 100.0,
+        "leading_edge_spacing": 0.0005,
+        "trailing_edge_spacing": 0.002,
+        "notes": "Generated from AR-138's measured ordinates; every spacing halves per level (reference.json)."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field",
+            "model": "point_vortex"
+        },
+        "notes": "Point vortex, as on NPARC's grid; at 100 chords its effect is small."
+    },
+    "freestream": {
+        "mach": 0.729,
+        "alpha_deg": 2.31,
+        "reynolds": 6500000.0,
+        "temperature": 460.0,
+        "notes": "Wind-tunnel-corrected case 6 (nominal M 0.725, alpha 2.92), as NPARC runs it; 460 R is NPARC's static temperature."
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

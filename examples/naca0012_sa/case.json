@@ -1,0 +1,34 @@
+{
+    "general": {
+        "case_name": "naca0012_sa",
+        "description": "Turbulent NACA 0012, SA: M 0.15, alpha 10 deg, Re 6e6",
+        "save_path": "results"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/n0012_225-65.p2dfmt",
+        "notes": "NASA TMR's 225x65 C-grid (data/grids/README.md); the path is relative to the case directory or the working directory."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.15,
+        "alpha_deg": 10.0,
+        "reynolds": 6000000.0,
+        "temperature": 540.0
+    },
+    "material_properties": {
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

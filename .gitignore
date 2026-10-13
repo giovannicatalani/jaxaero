@@ -1,0 +1,35 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.hypothesis/
+
+# Solver outputs: regenerate with scripts/, never commit.
+results/
+*.npz
+*.png
+!validation/gallery/**/*.png
+!docs/figures/*.png
+*.pdf
+
+# Grids are third-party input data (NASA TMR C-grids, 124 MB), kept locally for
+# the RANS phase and freely re-obtainable; see data/grids/README.md. The solver's
+# own O-grids are generated in closed form and never stored.
+data/grids/*
+!data/grids/README.md
+
+# Download archives: the extracted grids live in data/grids/.
+*.zip
+*.tar.gz
+
+# Commit stamp of a copy synced without .git (io/output.py reads it).
+GIT_COMMIT
+
+# Local working notes and site-specific run scripts: not part of the project.
+Execution Plan.md
+HPC_execution.md
+scripts/hpc/
+.claude/

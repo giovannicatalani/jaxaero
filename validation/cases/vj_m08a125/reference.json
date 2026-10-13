@@ -1,0 +1,30 @@
+{
+    "suite": "ladder",
+    "order": 4,
+    "levels": [
+        {
+            "file": "data/grids/kt_vj_32.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_vj_64.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_vj_128.p2dfmt"
+        }
+    ],
+    "reference": {
+        "cl": 0.3517,
+        "cd": 0.0225,
+        "cl_spread": 0.008,
+        "cd_spread": 0.00023,
+        "cl_tol": 0.02,
+        "cd_tol": 0.05,
+        "isolates": "the full case: a shock on a lifting section",
+        "sources": [
+            "J. C. Vassberg and A. Jameson, 'In Pursuit of Grid Convergence for Two-Dimensional Euler Solutions', J. Aircraft 47 (2010) 1152-1166; preprint http://aero-comlab.stanford.edu/Papers/AIAA-46737-375.pdf"
+        ],
+        "notes": "CL 0.3482 / 0.3517 / 0.3562 and CD 0.02245 / 0.02250 / 0.02268 across FLO82 / OVERFLOW / CFL3D."
+    },
+    "settled_cl_spread": 0.005,
+    "gallery": {}
+}

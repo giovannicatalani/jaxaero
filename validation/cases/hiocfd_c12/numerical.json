@@ -1,0 +1,20 @@
+{
+    "convective_fluxes": {
+        "riemann_solver": "hllc",
+        "limiter": "none",
+        "notes": "No limiter: minmod stalls both solvers near 4.3 orders on this smooth flow and clips the boundary layer (CD 0.0610 vs 0.0572 at 128x176)."
+    },
+    "time_integration": {
+        "solver": "implicit",
+        "notes": "Explicit RK reaches 4.5 orders in 100k iterations at 128x176; the implicit path reaches 10 in ~2400 steps."
+    },
+    "implicit": {
+        "jacobian": "first_order",
+        "preconditioner": "line_j"
+    },
+    "convergence": {
+        "max_iters": 3000,
+        "tol": 1e-12,
+        "block_iters": 20
+    }
+}

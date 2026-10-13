@@ -1,0 +1,28 @@
+{
+    "general": {
+        "case_name": "tmr_onera_m6_euler",
+        "description": "ONERA M6 wing, Euler: M 0.8395, alpha 3.06 deg (NPARC/WIND conditions), TMR's structured grid"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/onera_m6/om6_strct_32x88x48.ufmt",
+        "patches": [
+            {"name": "symmetry", "y_max": 1e-9},
+            {"name": "wall", "x_min": -1.0, "x_max": 3.0, "y_max": 3.0, "z_min": -1.0, "z_max": 1.0},
+            {"name": "farfield"}
+        ],
+        "reference_length": 0.8016729585,
+        "reference_area": 1.15315084119,
+        "moment_centre": [0.0, 0.0, 0.0],
+        "notes": "TMR's ONERA M6 structured family (one block, root chord 1, far field 100), generated with TMR's program, not tracked: data/grids/README.md. The wall spacing (y+ 0.5 at Re 14.6e6) is fine for Euler, only wasteful. Reference area, length and moment centre as in TMR's CFL3D input."
+    },
+    "boundary_conditions": {
+        "wall": {"type": "slip_wall"},
+        "farfield": {"type": "far_field"},
+        "symmetry": {"type": "symmetry"}
+    },
+    "freestream": {
+        "mach": 0.8395,
+        "alpha_deg": 3.06
+    }
+}

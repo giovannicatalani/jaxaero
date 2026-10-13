@@ -1,0 +1,21 @@
+{
+    "suite": "wing",
+    "order": 2,
+    "levels": [
+        {"file": "data/grids/onera_m6/om6_strct_32x88x48.ufmt"},
+        {"file": "data/grids/onera_m6/om6_strct_64x176x96.ufmt"}
+    ],
+    "reference": {
+        "cl": 0.266033,
+        "cd": 0.0173521,
+        "cl_tol": 0.005,
+        "cd_tol": 0.02,
+        "isolates": "SA in 3D on a swept wing with a lambda shock: TMR's case 2308 on TMR's own structured grids",
+        "sources": [
+            "https://tmbwg.github.io/turbmodels/onerawingnumerics_val_sa.html; validation/references/tmr_onera_m6/combined_forces_pitchmom_maxmut.dat (CFL3D, per level)",
+            "Schmitt and Charpin, AGARD AR-138 (1979), run 308: validation/references/tmr_onera_m6/case_2308.dat"
+        ],
+        "notes": "CFL3D on the same grids, level by level: 135,168 cells CL 0.261198 CD 0.0190461 CMY -0.184332; 1,081,344 cells CL 0.266033 CD 0.0173521 CMY -0.186608 (the reference above, the gate's level); 69M cells CL 0.269315 CD 0.0169562; FUN3D 60.8M nodes CL 0.269546 CD 0.0169473. Sectional Cp at eta 0.20 ... 0.99 against the experiment (+-0.02)."
+    },
+    "settled_cl_spread": 0.0001
+}

@@ -1,0 +1,42 @@
+{
+    "suite": "laminar",
+    "order": 1,
+    "levels": [
+        {
+            "file": "data/grids/kt_hiocfd_32x44_0.0004.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_hiocfd_64x88_0.0002.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_hiocfd_128x176_0.0001.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_hiocfd_256x352_5e-05.p2dfmt"
+        }
+    ],
+    "reference": {
+        "cl": 0.0183,
+        "cd": 0.0553,
+        "cl_spread": 0.0006,
+        "cd_spread": 0.0001,
+        "cl_tol": 0.05,
+        "cd_tol": 0.01,
+        "isolates": "laminar viscous flow: friction drag and trailing-edge separation",
+        "sources": [
+            "Case definition: https://www1.grc.nasa.gov/wp-content/uploads/case_c1.2.pdf",
+            "Aachen adaptive DG, CD 0.05531683, CL 0.01827345: https://www1.grc.nasa.gov/wp-content/uploads/C1.2_Aachen.pdf",
+            "McGill CPR/DG P2-P6, CD 0.055263-0.055362: https://www1.grc.nasa.gov/wp-content/uploads/C1.2_McGill.pdf"
+        ],
+        "notes": "Accepted at CD 1.26% from the reference on 256x352; the 1% tolerance is not met at that level."
+    },
+    "settled_cl_spread": 0.0001,
+    "gallery": {
+        "window": [
+            -0.3,
+            1.6,
+            -0.5,
+            0.5
+        ]
+    }
+}

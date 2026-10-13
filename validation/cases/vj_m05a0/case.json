@@ -1,0 +1,27 @@
+{
+    "general": {
+        "case_name": "vj_m05a0",
+        "description": "Vassberg-Jameson Euler ladder, rung 1: NACA 0012, M 0.5, alpha 0.0 deg"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/kt_vj_128.p2dfmt",
+        "notes": "Conformal Karman-Trefftz O-mesh of V&J's extended-chord section, ~148 chords far field, as their references used. Judge coarse levels against the codes' per-mesh values, not the continuum: upwind cell-centred codes are pre-asymptotic below ~256^2. Written by validation/grids/make_grids.py (Karman-Trefftz, section vj)."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.5,
+        "alpha_deg": 0.0,
+        "reynolds": null
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "general": {
+        "case_name": "tmr_laminar_ogrid",
+        "description": "Topology cross-check, O-grid: the same flow on wall-clustered Karman-Trefftz O-grids of the TMR section"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/kt_tmr_256x352_5e-05.p2dfmt",
+        "notes": "The C1.2 grid family, around the TMR section instead of the workshop's. Written by validation/grids/make_grids.py (Karman-Trefftz, section tmr)."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.5,
+        "alpha_deg": 1.0,
+        "reynolds": 5000.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "constant",
+        "prandtl_number": 0.72
+    }
+}

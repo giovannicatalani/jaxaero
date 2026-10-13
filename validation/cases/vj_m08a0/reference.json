@@ -1,0 +1,29 @@
+{
+    "suite": "ladder",
+    "order": 3,
+    "levels": [
+        {
+            "file": "data/grids/kt_vj_32.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_vj_64.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_vj_128.p2dfmt"
+        }
+    ],
+    "reference": {
+        "cl": 0.0,
+        "cd": 0.008342,
+        "cl_spread": 0.0,
+        "cd_spread": 1e-06,
+        "cl_tol": 1e-06,
+        "cd_tol": 0.02,
+        "isolates": "shock capture, with no lift to confound it",
+        "sources": [
+            "J. C. Vassberg and A. Jameson, 'In Pursuit of Grid Convergence for Two-Dimensional Euler Solutions', J. Aircraft 47 (2010) 1152-1166; preprint http://aero-comlab.stanford.edu/Papers/AIAA-46737-375.pdf"
+        ],
+        "notes": "CD 0.008342 from all three codes: six-digit agreement, the sharpest test in this project."
+    },
+    "settled_cl_spread": 1e-06
+}

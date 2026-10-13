@@ -1,0 +1,23 @@
+{
+    "suite": "high_lift",
+    "order": 1,
+    "levels": [
+        {"file": "data/grids/2Ddomain_L1_coarse_r1.p3d"},
+        {"file": "data/grids/2Ddomain_L2_medium_r1.p3d"},
+        {"file": "data/grids/2Ddomain_L3_fine_r1.p3d"}
+    ],
+    "reference": {
+        "cl": 2.8766,
+        "cd": 0.040224,
+        "cl_tol": 0.03,
+        "cd_tol": 0.10,
+        "isolates": "multi-block grids and multi-element flow: slat cove, gaps, confluent wakes",
+        "sources": [
+            "JAXA 2D RANS, APC-IV/V, validation/references/jaxa_30p30n/forces_rans_jaxa.dat (solver, grid and model not stated; SA likely)",
+            "JAXA LWT2 Kevlar-wall 2017, mean Cp at AoAu 7 deg = open-air 5.5 deg, validation/references/jaxa_30p30n/cp_exp_aoa5.5.dat"
+        ],
+        "notes": "Provisional tolerances, to be revised once per-level results exist: the RANS reference is one code on an unstated grid, not a grid-converged value. Judge Cp per element against the experiment and the RANS."
+    },
+    "settled_cl_spread": 0.0001,
+    "gallery": {}
+}

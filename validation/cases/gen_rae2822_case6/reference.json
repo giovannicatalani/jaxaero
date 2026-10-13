@@ -1,0 +1,45 @@
+{
+    "suite": "generated",
+    "order": 1,
+    "levels": [
+        {
+            "cells_airfoil": 128,
+            "cells_wake": 32,
+            "cells_normal": 64,
+            "wall_spacing": 4e-06,
+            "leading_edge_spacing": 0.001,
+            "trailing_edge_spacing": 0.004
+        },
+        {
+            "cells_airfoil": 256,
+            "cells_wake": 64,
+            "cells_normal": 128,
+            "wall_spacing": 2e-06,
+            "leading_edge_spacing": 0.0005,
+            "trailing_edge_spacing": 0.002
+        },
+        {
+            "cells_airfoil": 512,
+            "cells_wake": 128,
+            "cells_normal": 256,
+            "wall_spacing": 1e-06,
+            "leading_edge_spacing": 0.00025,
+            "trailing_edge_spacing": 0.001
+        }
+    ],
+    "reference": {
+        "cl": 0.73096,
+        "cd": 0.0121165,
+        "cl_spread": 0.012,
+        "cd_spread": 0.0006,
+        "cl_tol": 0.02,
+        "cd_tol": 0.05,
+        "isolates": "shock-boundary-layer interaction: the first case with a shock and a boundary layer",
+        "sources": [
+            "https://www.grc.nasa.gov/www/wind/valid/raetaf/raetaf04/raetaf04.html (WIND, SA, this grid); validation/references/rae2822/forces.lis",
+            "Cook, McDonald and Firmin, AGARD AR-138 (1979), case 6: CL 0.743, CD 0.0127, CM -0.095"
+        ],
+        "notes": "A grid family for this case: generated from the measured ordinates, all spacings halved per level, so a grid-convergence statement is possible. References as nparc_rae2822_case6 (WIND on NPARC's grid, AR-138 experiment); this solver on NPARC's grid: CL 0.72118, CD 0.012452, shock 0.5455."
+    },
+    "settled_cl_spread": 0.0001
+}

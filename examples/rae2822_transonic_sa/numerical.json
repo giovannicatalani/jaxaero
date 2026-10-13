@@ -1,0 +1,15 @@
+{
+    "convective_fluxes": {
+        "limiter": "van_albada",
+        "notes": "A shock and a boundary layer: van_albada holds the shock and converges to round-off; minmod stalls at ~3 orders, none at ~8."
+    },
+    "time_integration": {
+        "solver": "implicit"
+    },
+    "implicit": {
+        "max_relative_update": 0.2
+    },
+    "convergence": {
+        "max_iters": 6000
+    }
+}

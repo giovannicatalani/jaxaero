@@ -1,0 +1,29 @@
+{
+    "general": {
+        "case_name": "hiocfd_c12",
+        "description": "HiOCFD workshop case C1.2(c): laminar flow over the closed-trailing-edge NACA 0012"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/kt_hiocfd_256x352_5e-05.p2dfmt",
+        "notes": "n_c x 11 n_c / 8 cells; the wall spacing halves as n_c doubles, 1e-4 chords at n_c = 128: about 35 cells across the Re 5000 boundary layer at mid-chord. Far field ~147 chords (the case PDF's radius is garbled). Written by validation/grids/make_grids.py (Karman-Trefftz, section hiocfd)."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.5,
+        "alpha_deg": 1.0,
+        "reynolds": 5000.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "constant",
+        "prandtl_number": 0.72
+    }
+}

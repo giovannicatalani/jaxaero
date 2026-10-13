@@ -1,0 +1,11 @@
+{
+    "suite": "topology",
+    "order": 1,
+    "notes": "No reference values: this case and tmr_laminar_ogrid solve the same continuum problem on two grid topologies, so their grid-converged CL and CD must agree. That verifies the wake-cut exchange and the outflow planes on a viscous flow before the turbulence model depends on them.",
+    "levels": [
+        {"file": "data/grids/n0012_113-33.p2dfmt"},
+        {"file": "data/grids/n0012_225-65.p2dfmt"},
+        {"file": "data/grids/n0012_449-129.p2dfmt.gz"}
+    ],
+    "settled_cl_spread": 0.0001
+}

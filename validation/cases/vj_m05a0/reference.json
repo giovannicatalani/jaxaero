@@ -1,0 +1,29 @@
+{
+    "suite": "ladder",
+    "order": 1,
+    "levels": [
+        {
+            "file": "data/grids/kt_vj_32.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_vj_64.p2dfmt"
+        },
+        {
+            "file": "data/grids/kt_vj_128.p2dfmt"
+        }
+    ],
+    "reference": {
+        "cl": 0.0,
+        "cd": 0.0,
+        "cl_spread": 0.0,
+        "cd_spread": 0.0,
+        "cl_tol": 1e-06,
+        "cd_tol": 1e-05,
+        "isolates": "metrics, boundary conditions and flux; no lift, no shock",
+        "sources": [
+            "J. C. Vassberg and A. Jameson, 'In Pursuit of Grid Convergence for Two-Dimensional Euler Solutions', J. Aircraft 47 (2010) 1152-1166; preprint http://aero-comlab.stanford.edu/Papers/AIAA-46737-375.pdf"
+        ],
+        "notes": "The three codes report CD 4.5e-8, 5.0e-8 and -1.9e-7, zero within their noise. cd_tol 1e-5 is two orders above that and two below the wave drag of m08a0. Zero references make cl_tol and cd_tol absolute."
+    },
+    "settled_cl_spread": 1e-06
+}

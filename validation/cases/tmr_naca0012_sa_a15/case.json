@@ -1,0 +1,35 @@
+{
+    "general": {
+        "case_name": "tmr_naca0012_sa_a15",
+        "description": "NASA TMR NACA 0012 validation, SA-noft2, M 0.15, Re 6e6, alpha 15 deg"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/n0012_449-129.p2dfmt.gz",
+        "notes": "TMR's family I C-grids, far field ~500 chords; not tracked, see data/grids/README.md."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.15,
+        "alpha_deg": 15.0,
+        "reynolds": 6000000.0,
+        "temperature": 540.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

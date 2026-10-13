@@ -1,0 +1,23 @@
+site_name: JAX-Aero
+site_description: Steady 2D airfoil solver in JAX
+docs_dir: docs
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+markdown_extensions:
+  - tables
+  - admonition
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Running a case: guide.md
+  - Your own airfoil: own-airfoil.md
+  - Multi-element airfoil: multi-element.md
+  - A 3D wing: wing-3d.md
+  - Case reference: case_reference.md
+  - Equations and method: theory.md
+  - Developer guide: developer.md
+  - Design notes: dev/notes.md

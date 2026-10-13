@@ -1,0 +1,69 @@
+{
+    "general": {
+        "case_name": "tmr_flatplate_sa",
+        "description": "NASA TMR 2DZP: turbulent zero-pressure-gradient flat plate, SA, M 0.2, Re 5e6 per unit length"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/flatplate_clust2_2levelsdown_137x97.p2dfmt",
+        "patches": [
+            {
+                "name": "symmetry",
+                "x_max": 0.0,
+                "y_max": 1e-09
+            },
+            {
+                "name": "wall",
+                "x_min": 0.0,
+                "y_max": 1e-09
+            },
+            {
+                "name": "inflow",
+                "x_max": -0.33333
+            },
+            {
+                "name": "outflow",
+                "x_min": 2.0
+            },
+            {
+                "name": "farfield"
+            }
+        ],
+        "reference_length": 2.0,
+        "notes": "TMR's nested grids (https://tmbwg.github.io/turbmodels/flatplate_grids.html), x from -1/3 to 2, plate from x = 0, top at y = 1. Not tracked: see data/grids/README.md. CD is per plate length 2, as TMR quotes it. Patches: the plate grid names none, so they are set by box: symmetry (y = 0, x < 0), wall (y = 0, x > 0), inflow (x = -1/3), outflow (x = 2), farfield (the rest)."
+    },
+    "boundary_conditions": {
+        "symmetry": {
+            "type": "symmetry"
+        },
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "inflow": {
+            "type": "inflow_total"
+        },
+        "outflow": {
+            "type": "outflow_static"
+        },
+        "farfield": {
+            "type": "far_field"
+        },
+        "notes": "As CFL3D's input: total p and T at the inflow (1.02828, 1.008: the freestream's), p = p_inf at the outflow, symmetry ahead of the plate, Riemann invariants on top."
+    },
+    "freestream": {
+        "mach": 0.2,
+        "alpha_deg": 0.0,
+        "reynolds": 5000000.0,
+        "temperature": 540.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "suite": "rans",
+    "order": 4,
+    "levels": [
+        {
+            "file": "data/grids/n0012_113-33.p2dfmt"
+        },
+        {
+            "file": "data/grids/n0012_225-65.p2dfmt"
+        },
+        {
+            "file": "data/grids/n0012_449-129.p2dfmt.gz"
+        }
+    ],
+    "reference": {
+        "cl": 1.5461,
+        "cd": 0.02124,
+        "cl_spread": 0.0196,
+        "cd_spread": 0.00086,
+        "cl_tol": 0.02,
+        "cd_tol": 0.06,
+        "isolates": "SA near maximum lift: trailing-edge separation onset",
+        "sources": [
+            "https://tmbwg.github.io/turbmodels/naca0012_val_sa.html (seven codes, 897x257, point-vortex far field)"
+        ],
+        "notes": "CL 1.5446-1.5642, CD 0.02073-0.02159 across seven codes (CFL3D 1.5461 / 0.02124) on 897x257 with a point-vortex far field; without it, expect a small offset. TMR warns of more grid sensitivity here than at 10 deg."
+    },
+    "settled_cl_spread": 0.0001,
+    "gallery": {
+        "window": [
+            -0.3,
+            1.3,
+            -0.5,
+            0.5
+        ],
+        "surface_reference": "tmr_naca0012:15"
+    }
+}

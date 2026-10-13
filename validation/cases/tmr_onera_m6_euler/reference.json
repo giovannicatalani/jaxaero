@@ -1,0 +1,11 @@
+{
+    "suite": "wing",
+    "order": 1,
+    "levels": [
+        {"file": "data/grids/onera_m6/om6_strct_32x88x48.ufmt"},
+        {"file": "data/grids/onera_m6/om6_strct_64x176x96.ufmt"}
+    ],
+    "reference": null,
+    "settled_cl_spread": 0.0001,
+    "notes": "Judged by sectional Cp against the experiment (run 308, validation/references/tmr_onera_m6/case_2308.dat; M 0.8395, alpha 3.06 as NPARC), the lambda shock's positions at eta 0.20-0.80 (published Euler results disagree near the tip). No sourced Euler forces on these grids."
+}

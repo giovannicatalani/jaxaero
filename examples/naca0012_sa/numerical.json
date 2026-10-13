@@ -1,0 +1,17 @@
+{
+    "convective_fluxes": {
+        "riemann_solver": "hllc",
+        "limiter": "none"
+    },
+    "time_integration": {
+        "solver": "implicit"
+    },
+    "implicit": {
+        "max_relative_update": 0.2
+    },
+    "convergence": {
+        "max_iters": 6000,
+        "tol": 1e-12,
+        "block_iters": 20
+    }
+}

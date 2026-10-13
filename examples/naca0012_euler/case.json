@@ -1,0 +1,28 @@
+{
+    "general": {
+        "case_name": "naca0012_euler",
+        "description": "Transonic NACA 0012, Euler: M 0.8, alpha 1.25 deg",
+        "save_path": "results"
+    },
+    "domain": {
+        "grid": "o_grid",
+        "airfoil": "naca0012",
+        "cells_airfoil": 128,
+        "cells_normal": 96,
+        "wall_spacing": 0.001,
+        "far_field": 100.0,
+        "notes": "An O-grid generated round the NACA 0012 (closed trailing edge), 128 x 96 cells, far field at 100 chords. Any airfoil: a NACA 4-digit name or a coordinate file (Selig or Lednicer)."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.8,
+        "alpha_deg": 1.25
+    }
+}

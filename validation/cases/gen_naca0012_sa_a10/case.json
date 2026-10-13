@@ -1,0 +1,42 @@
+{
+    "general": {
+        "case_name": "gen_naca0012_sa_a10",
+        "description": "NACA 0012 SA-noft2, M 0.15, Re 6e6, alpha 10 deg, on generated C-grids matched to TMR family I"
+    },
+    "domain": {
+        "grid": "c_grid",
+        "airfoil": "../../references/tmr_naca0012/naca0012_tmr.dat",
+        "cells_airfoil": 256,
+        "cells_wake": 96,
+        "cells_normal": 128,
+        "wall_spacing": 1.7e-06,
+        "far_field": 500.0,
+        "leading_edge_spacing": 0.000215,
+        "trailing_edge_spacing": 0.00215,
+        "notes": "TMR family I's sizes, spacings and far field (449x129 level here) round TMR's section; the generator's grid, not TMR's. naca0012 (the -0.1036 closure, ~1% thicker) gave CL 0.3-0.4% lower at every level."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.15,
+        "alpha_deg": 10.0,
+        "reynolds": 6000000.0,
+        "temperature": 540.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

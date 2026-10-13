@@ -1,0 +1,40 @@
+{
+    "general": {
+        "case_name": "tmr_onera_m6_sa_2308",
+        "description": "NASA TMR ONERA M6 case 2308, SA-noft2: M 0.84, alpha 3.06 deg, Re 14.6e6 per root chord"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/onera_m6/om6_strct_32x88x48.ufmt",
+        "patches": [
+            {"name": "symmetry", "y_max": 1e-9},
+            {"name": "wall", "x_min": -1.0, "x_max": 3.0, "y_max": 3.0, "z_min": -1.0, "z_max": 1.0},
+            {"name": "farfield"}
+        ],
+        "reference_length": 0.8016729585,
+        "reference_area": 1.15315084119,
+        "moment_centre": [0.0, 0.0, 0.0],
+        "notes": "TMR's structured family, generated with TMR's program (data/grids/README.md). Reference values as in TMR's CFL3D input."
+    },
+    "boundary_conditions": {
+        "wall": {"type": "no_slip_wall"},
+        "farfield": {"type": "far_field"},
+        "symmetry": {"type": "symmetry"}
+    },
+    "freestream": {
+        "mach": 0.84,
+        "alpha_deg": 3.06,
+        "reynolds": 14600000.0,
+        "temperature": 540.0
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "general": {
+        "case_name": "jaxa_30p30n_a5p5",
+        "description": "30P30N three-element high-lift airfoil (JAXA modified slat config F), SA-noft2, M 0.17, alpha 5.5 deg, Re 1.71e6 (stowed chord)"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/2Ddomain_L1_coarse_r1.p3d",
+        "coordinate_scale": 0.05555555555555555,
+        "notes": "JAXA's 2D 117-block structured grid, level L1 of five (63,957 cells), in inches: scaled by 1/18 to stowed chords. Connectivity is inferred from the coordinates (io/multiblock.py). Not tracked, see data/grids/README.md."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        },
+        "notes": "Far field at ~107 chords: plain characteristic first (the point vortex is single-block only); measure before adding it."
+    },
+    "freestream": {
+        "mach": 0.17,
+        "alpha_deg": 5.5,
+        "reynolds": 1710000.0,
+        "temperature": 295.56,
+        "notes": "APC-IV/V 2D task (JAXA); 5.5 deg is the open-air angle equivalent to the wind tunnel's 7 deg."
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 110.4,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

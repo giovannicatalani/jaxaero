@@ -1,0 +1,35 @@
+{
+    "general": {
+        "case_name": "rae2822_transonic_sa",
+        "description": "Transonic RAE 2822 (AGARD case 6), SA: M 0.729, alpha 2.31 deg, Re 6.5e6",
+        "save_path": "results"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "data/grids/rae2822_nparc.x.fmt",
+        "notes": "NASA NPARC's 369x65 C-grid (data/grids/README.md); its far field is only 20-38 chords away."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field",
+            "model": "point_vortex"
+        },
+        "notes": "On a near far field, relax to the freestream plus the point vortex of the current lift; the plain characteristic far field loses ~3% of CL here."
+    },
+    "freestream": {
+        "mach": 0.729,
+        "alpha_deg": 2.31,
+        "reynolds": 6500000.0,
+        "temperature": 460.0
+    },
+    "material_properties": {
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6
+    },
+    "turbulence": {
+        "model": "sa_noft2"
+    }
+}

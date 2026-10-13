@@ -1,0 +1,27 @@
+{
+    "suite": "transonic",
+    "order": 1,
+    "levels": [
+        {
+            "file": "data/grids/rae2822_nparc.x.fmt"
+        }
+    ],
+    "reference": {
+        "cl": 0.73096,
+        "cd": 0.0121165,
+        "cl_spread": 0.012,
+        "cd_spread": 0.0006,
+        "cl_tol": 0.02,
+        "cd_tol": 0.05,
+        "isolates": "shock-boundary-layer interaction: the first case with a shock and a boundary layer",
+        "sources": [
+            "https://www.grc.nasa.gov/www/wind/valid/raetaf/raetaf04/raetaf04.html (WIND, SA, this grid); validation/references/rae2822/forces.lis",
+            "Cook, McDonald and Firmin, AGARD AR-138 (1979), case 6: CL 0.743, CD 0.0127, CM -0.095"
+        ],
+        "notes": "WIND SA on this same 369x65 grid (CDp 0.00620, CDv 0.00592; CM -0.0901 nose-up positive). Spread = WIND to the corrected experiment (CL 0.743, CD 0.0127, CM -0.095). Shock (Cp rises through Cp*): WIND 0.5455, experiment 0.5779. One grid level only: no grid-convergence statement is possible. Tolerances are against WIND on this grid: 2% CL, 5% CD."
+    },
+    "settled_cl_spread": 0.0001,
+    "gallery": {
+        "surface_reference": "rae2822"
+    }
+}

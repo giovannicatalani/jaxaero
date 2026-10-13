@@ -1,0 +1,29 @@
+{
+    "general": {
+        "case_name": "clarky_sa",
+        "description": "Clark Y, SA RANS: M 0.2, alpha 4 deg, Re 3e6"
+    },
+    "domain": {
+        "grid": "c_grid",
+        "airfoil": "clarky.dat",
+        "trailing_edge": "close",
+        "cells_airfoil": 256,
+        "cells_wake": 64,
+        "cells_normal": 96,
+        "wall_spacing": 5e-06,
+        "notes": "clarky.dat is the UIUC file as downloaded (Lednicer format, trailing-edge gap 0.0012 c), closed here so that a C-grid can be built."
+    },
+    "freestream": {
+        "mach": 0.2,
+        "alpha_deg": 4.0,
+        "reynolds": 3000000.0,
+        "temperature": 288.15
+    },
+    "material_properties": {
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 110.4
+    },
+    "turbulence": {
+        "model": "sa_noft2"
+    }
+}

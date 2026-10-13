@@ -1,0 +1,38 @@
+{
+    "general": {
+        "case_name": "onera_m6_sa",
+        "description": "ONERA M6 wing, SA RANS: M 0.84, alpha 3.06 deg, Re 14.6e6 per root chord (NASA TMR case 2308)"
+    },
+    "domain": {
+        "grid": "file",
+        "file": "om6_strct_16x44x24.ufmt",
+        "patches": [
+            {"name": "symmetry", "y_max": 1e-9},
+            {"name": "wall", "x_min": -1.0, "x_max": 3.0, "y_max": 3.0, "z_min": -1.0, "z_max": 1.0},
+            {"name": "farfield"}
+        ],
+        "reference_area": 1.15315084119,
+        "reference_length": 0.8016729585,
+        "moment_centre": [0.0, 0.0, 0.0],
+        "notes": "One 3D block of 16 x 44 x 24 cells (16,896), in this directory: the fifth level of NASA TMR's structured ONERA M6 family (root chord 1, semispan 1.476, far field at 100 chords), coarse enough to run anywhere. Finer levels: data/grids/README.md. Patches are named by box rules: the root plane y = 0, the wing inside a box, the rest far field. Reference area (the semispan planform), length (the mean aerodynamic chord) and moment centre as in TMR's runs."
+    },
+    "boundary_conditions": {
+        "wall": {"type": "no_slip_wall"},
+        "farfield": {"type": "far_field"},
+        "symmetry": {"type": "symmetry"}
+    },
+    "freestream": {
+        "mach": 0.84,
+        "alpha_deg": 3.06,
+        "reynolds": 14600000.0,
+        "temperature": 540.0,
+        "notes": "In 3D the incidence is in the x-z plane: x chordwise, y along the span, z up."
+    },
+    "material_properties": {
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 198.6
+    },
+    "turbulence": {
+        "model": "sa_noft2"
+    }
+}

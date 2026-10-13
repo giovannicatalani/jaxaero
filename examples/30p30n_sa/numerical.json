@@ -1,0 +1,14 @@
+{
+    "convective_fluxes": {
+        "limiter": "van_albada"
+    },
+    "time_integration": {
+        "solver": "implicit"
+    },
+    "implicit": {
+        "max_relative_update": 0.2
+    },
+    "convergence": {
+        "max_iters": 8000
+    }
+}

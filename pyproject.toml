@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jax-aero"
+dynamic = ["version"]
+description = "JAX-Aero: GPU aerodynamics in JAX -- compressible Euler, laminar Navier-Stokes and SA RANS on structured single- and multi-block grids"
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "giovannicatalani" }]
+requires-python = ">=3.11"
+dependencies = [
+    "jax>=0.4.30",
+    "numpy>=1.26",
+    "scipy>=1.10",
+]
+keywords = ["CFD", "aerodynamics", "JAX", "RANS", "Spalart-Allmaras", "airfoil", "GPU"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[project.scripts]
+jaxaero = "jaxaero.__main__:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6", "sympy>=1.12", "build>=1", "pyflakes>=3"]
+docs = ["mkdocs>=1.6,<2", "mkdocs-material>=9,<10"]
+plot = ["matplotlib>=3.7"]
+cgns = ["h5py>=3.8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "jaxaero.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: verification tests that take minutes",
+]

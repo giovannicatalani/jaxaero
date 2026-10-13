@@ -1,0 +1,11 @@
+{
+    "convective_fluxes": {
+        "limiter": "none"
+    },
+    "time_integration": {
+        "solver": "implicit"
+    },
+    "convergence": {
+        "max_iters": 3000
+    }
+}
