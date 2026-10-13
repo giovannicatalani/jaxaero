@@ -1,5 +1,7 @@
 site_name: JAX-Aero
-site_description: Steady 2D airfoil solver in JAX
+site_description: Compressible Euler, Navier-Stokes and SA RANS on structured grids in JAX, 2D and 3D
+site_url: https://giovannicatalani.github.io/jaxaero/
+repo_url: https://github.com/giovannicatalani/jaxaero
 docs_dir: docs
 theme:
   name: material
