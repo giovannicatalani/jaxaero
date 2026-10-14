@@ -83,13 +83,16 @@ SOLVERS: tuple[str, ...] = ("explicit", "implicit")
 @dataclass(frozen=True)
 class NumericsConfig:
     """Discretization and stepping (``docs/case_reference.md``). ``tol`` is relative
-    to the residual's running peak; ``far_field`` keys ``numerics.boundary.FAR_FIELDS``."""
+    to the residual's running peak; ``forces_tol`` the largest spread of CL, CD
+    and CM over the last quarter of a run for it to stop as settled (``None``:
+    never); ``far_field`` keys ``numerics.boundary.FAR_FIELDS``."""
 
     flux: str = "hllc"
     limiter: str = "minmod"
     cfl: float = 1.5
     max_iters: int = 40_000
     tol: float = 1.0e-12
+    forces_tol: float | None = 1.0e-5
     n_ghost: int = 2
     solver: str = "explicit"
     far_field: str = "characteristic"
@@ -102,6 +105,8 @@ class NumericsConfig:
             raise ValueError(f"max_iters must be >= 1, got {self.max_iters}")
         if not 0.0 < self.tol < 1.0:
             raise ValueError(f"tol must lie in (0, 1), got {self.tol}")
+        if self.forces_tol is not None and not self.forces_tol > 0.0:
+            raise ValueError(f"forces_tol must be positive or null, got {self.forces_tol}")
         if self.n_ghost < 2:
             raise ValueError(
                 f"n_ghost must be >= 2 for MUSCL reconstruction, got {self.n_ghost}"

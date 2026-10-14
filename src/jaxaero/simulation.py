@@ -41,8 +41,9 @@ most RANS runs stall at round-off (9.8-10.8 orders) before ``tol``."""
 
 
 def cl_spread(cl_history: np.ndarray) -> float:
-    """CL range over the last quarter of the blocks; NaN with fewer than four
-    samples there, so a short run is never settled."""
+    """CL (or any per-block history's) range over the last quarter of the
+    blocks; NaN with fewer than four samples there, so a short run is never
+    settled."""
     tail = np.asarray(cl_history)[3 * len(cl_history) // 4:]
     return float(tail.max() - tail.min()) if tail.size >= 4 else float("nan")
 
@@ -192,18 +193,23 @@ def run(case: Case, grid: Atlas | None = None, progress: Progress | None = None)
     step, state = make_stepper(case, grid)
 
     cl_history: list[float] = []
+    coefficients: list[tuple[float, float, float]] = []
     peak = [0.0]
 
-    def on_block(index: int, current, residuals: np.ndarray) -> None:
+    def on_block(index: int, current, residuals: np.ndarray) -> bool:
         finite = residuals[np.isfinite(residuals)]
         if finite.size:
             peak[0] = max(peak[0], float(finite.max()))
         forces = integrate_forces(current.U, grid, flow, length)
         cl_history.append(forces.cl)
+        coefficients.append((forces.cl, forces.cd, forces.cm))
         if progress is not None:
             last = float(residuals[-1])
             orders = float(np.log10(peak[0] / last)) if peak[0] > 0.0 and last > 0.0 else 0.0
             progress((index + 1) * case.block_iters, last, orders, forces)
+        # NaN (too few blocks) compares false: a short run never stops here.
+        return numerics.forces_tol is not None and all(
+            cl_spread(h) < numerics.forces_tol for h in np.transpose(coefficients))
 
     state, history = run_to_steady(
         step, state,

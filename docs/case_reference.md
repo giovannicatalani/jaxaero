@@ -120,4 +120,5 @@ One entry per patch of the grid, `"<patch>": {"type": ..., "model": ...}`; a pat
 |---|---|---|---|
 | `max_iters` | integer | `40000` | iteration ceiling |
 | `tol` | number | `1e-12` | residual drop from its running peak |
+| `forces_tol` | number or null | `1e-05` | stop once CL, CD and CM each vary by less than this over the last quarter of the iterations (at least four blocks there); null: run to `tol` or `max_iters` |
 | `block_iters` | integer | 200 explicit, 20 implicit | iterations per device call; forces are monitored at this interval |

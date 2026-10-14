@@ -247,6 +247,7 @@ def parse_case(case_doc: dict, numerical_doc: dict, directory: Path = Path("."))
         cfl=stepping["cfl"],
         max_iters=convergence["max_iters"],
         tol=convergence["tol"],
+        forces_tol=convergence["forces_tol"],
         solver=stepping["solver"],
         far_field=far_field,
     )

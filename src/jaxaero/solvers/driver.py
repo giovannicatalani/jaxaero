@@ -28,6 +28,7 @@ class ExitReason:
     """Why the driver stopped."""
 
     CONVERGED = "converged"
+    SETTLED = "settled"
     MAX_ITERS = "max_iters"
     NON_FINITE = "non_finite"
 
@@ -107,7 +108,7 @@ def run_to_steady(
     max_iters: int,
     tol: float,
     block_iters: int = 100,
-    on_block: Callable[[int, Any, np.ndarray], None] | None = None,
+    on_block: Callable[[int, Any, np.ndarray], bool | None] | None = None,
     finite_check: Callable[[Any], Array] | None = None,
     devices: Sequence | None = None,
 ) -> tuple[Any, ConvergenceHistory]:
@@ -116,7 +117,9 @@ def run_to_steady(
     The peak, not the first value: a uniform-freestream start has a near-zero
     first residual (free-stream preservation), a degenerate reference.
     ``on_block(block, state, residuals)`` runs between blocks (the only place
-    for I/O); ``finite_check(state)`` is an optional device-side health test.
+    for I/O); returning true stops every running case as ``SETTLED`` (the
+    caller's own test, e.g. on forces). ``finite_check(state)`` is an optional
+    device-side health test.
     """
     block = make_block(step, block_iters, devices)
     if devices is not None and len(devices) > 1:
@@ -135,8 +138,7 @@ def run_to_steady(
         if b == 0:
             first_block = time.perf_counter() - started
         blocks.append(block_residual)
-        if on_block is not None:
-            on_block(b, state, block_residual)
+        stop = on_block(b, state, block_residual) if on_block is not None else False
 
         columns = block_residual.reshape(block_residual.shape[0], -1)   # (block, n_cases)
         if peak is None:
@@ -151,14 +153,17 @@ def run_to_steady(
             failed[:] = True
         reasons[running & failed] = ExitReason.NON_FINITE
         reasons[running & ~failed & (peak > 0) & (last <= tol * peak)] = ExitReason.CONVERGED
+        if stop:
+            reasons[reasons == ExitReason.MAX_ITERS] = ExitReason.SETTLED
         if not np.any(reasons == ExitReason.MAX_ITERS):
             break
 
     residual = np.concatenate(blocks) if blocks else np.zeros(0, dtype=np.float64)
-    unfinished = [r for r in reasons if r != ExitReason.CONVERGED]
+    failed = [r for r in reasons if r not in (ExitReason.CONVERGED, ExitReason.SETTLED)]
+    settled = ExitReason.SETTLED in reasons
     return state, ConvergenceHistory(
         residual=residual,
-        reason=unfinished[0] if unfinished else ExitReason.CONVERGED,
+        reason=failed[0] if failed else ExitReason.SETTLED if settled else ExitReason.CONVERGED,
         n_iters=int(residual.shape[0]),
         seconds=time.perf_counter() - started,
         first_block_seconds=first_block,

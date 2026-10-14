@@ -47,3 +47,19 @@ def test_a_non_finite_case_fails_alone() -> None:
     step = lambda x: (x * jnp.asarray([0.5, jnp.inf]), x * jnp.asarray([0.5, jnp.inf]))  # noqa: E731
     _, history = run_to_steady(step, jnp.asarray([1.0, 1.0]), max_iters=100, tol=1e-6, block_iters=10)
     assert history.case_reasons == (ExitReason.CONVERGED, ExitReason.NON_FINITE)
+
+
+def test_the_caller_can_stop_the_march_as_settled() -> None:
+    """``on_block`` returning true ends a run that has not reached ``tol``, as
+    ``SETTLED``, at the end of that block."""
+    _, history = run_to_steady(decay(1.0), jnp.asarray(1.0), max_iters=1000, tol=1e-6, block_iters=10,
+                               on_block=lambda b, state, residuals: b == 4)
+    assert history.reason == ExitReason.SETTLED and not history.converged
+    assert history.n_iters == 50
+
+
+def test_a_settled_stop_does_not_hide_a_failure() -> None:
+    _, history = run_to_steady(decay([1.0, jnp.inf]), jnp.asarray([1.0, 1.0]), max_iters=100, tol=1e-6,
+                               block_iters=10, on_block=lambda b, state, residuals: True)
+    assert history.case_reasons == (ExitReason.SETTLED, ExitReason.NON_FINITE)
+    assert history.reason == ExitReason.NON_FINITE

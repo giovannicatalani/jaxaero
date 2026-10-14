@@ -162,6 +162,9 @@ NUMERICAL: dict[str, tuple[Key, ...]] = {
     "convergence": (
         Key("max_iters", "integer", _N.max_iters, "iteration ceiling"),
         Key("tol", "number", _N.tol, "residual drop from its running peak"),
+        Key("forces_tol", "number|null", _N.forces_tol, "stop once CL, CD and CM each vary by less than "
+            "this over the last quarter of the iterations (at least four blocks there); null: run to `tol` "
+            "or `max_iters`"),
         Key("block_iters", "integer", None, "iterations per device call; forces are monitored at this "
             "interval", default_text="200 explicit, 20 implicit"),
     ),

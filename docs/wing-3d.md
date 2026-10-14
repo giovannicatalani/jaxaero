@@ -169,8 +169,10 @@ Measured on this wing, per implicit step:
 | 1,081,344 | A100 | 0.86 s | 1.32 s |
 
 Forces are steady after roughly 600 to 2500 steps, more on finer grids. The
-run goes on to `max_iters`, and results are written at the end, so set
-`max_iters` with that in mind.
+run stops there by itself (`settled`: CL, CD and CM each vary by less than
+`convergence.forces_tol`, 1e-5, over the last quarter of the iterations), or
+at `tol` or `max_iters`, whichever comes first; results are written at the
+end.
 
 ## 7. Finer grids of the example
 

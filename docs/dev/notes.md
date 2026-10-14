@@ -22,6 +22,14 @@ each choice, grouped by module.
 
 ## solvers/driver.py
 
+- **Force-based stopping is the default** (`convergence.forces_tol` 1e-5,
+  the gallery's settledness test on CL, CD and CM). RANS residuals stall at
+  round-off 10-11 orders down, and some cases at 2-3 (30P30N L1, NACA 0012
+  at 0 deg) with the forces settled to six digits long before. On RAE 2822
+  the run stops at 940 of 6000 steps with the 6000-step forces to every
+  printed digit; on the M6 135k level at 1600, the same forces to six digits
+  whatever the Krylov settings.
+
 - **Convergence is judged from the running peak.** Started from uniform
   freestream, the first residual is near zero (every cell away from the wall
   is in equilibrium), so normalising by it reports a residual that appears
@@ -84,6 +92,18 @@ each choice, grouped by module.
 - **Venkatakrishnan is deliberately absent**: it is a smooth Barth-Jespersen
   for unstructured grids, not a slope-ratio limiter; fed `r = a/b` it returns
   `phi(1) = 3/4`, quietly losing second order.
+
+## core/linalg.py
+
+- **The line solve is block cyclic reduction**, Thomas kept as the reference
+  in the tests. A Thomas sweep is `2L` dependent steps per application
+  (`L` the chain length), each a small kernel: on an A100 the preconditioner
+  was 89% of an RAE 2822 Newton step (121.7 against 13.6 ms with full-length
+  GMRES). Odd-even reduction is `ceil(log2 L)` levels for about twice the
+  flops: per apply 3.52 -> 0.136 ms on RAE 2822 (flow chains of 128), 2.08 ->
+  0.24 ms on M6 135k, and still faster at 1.08M cells (4.81 -> 2.89 ms) once
+  the power-of-two padding was dropped (with it, 1.08M was no faster).
+  `lax.scan(unroll=8)` gave only 2-4x and was dropped.
 
 ## solvers/krylov.py
 
