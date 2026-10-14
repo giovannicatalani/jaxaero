@@ -25,7 +25,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
-from ..core.linalg import factor_block_tridiagonal, solve_block_tridiagonal
+from ..core.linalg import factor_cyclic_reduction, solve_cyclic_reduction
 from ..core.state import RHO, Rows, dot
 from ..mesh.atlas import Atlas
 from ..numerics import turbulence
@@ -115,12 +115,12 @@ def _scan_major(blocks: Array) -> Array:
 
 def chain_solver(lower: Array, diag: Array, upper: Array, layout: ChainLayout):
     """Factor the chains once; return ``r -> x`` on canvas fields ``(m, *canvas shape)``."""
-    factor = factor_block_tridiagonal(lower, diag, upper)
+    factor = factor_cyclic_reduction(lower, diag, upper)
 
     def solve(r: Array) -> Array:
         flat = r.reshape(r.shape[0], -1)
         rhs = jnp.where(layout.valid, layout.gather(flat), 0.0)          # (m, n, L)
-        x = solve_block_tridiagonal(factor, jnp.transpose(rhs, (2, 1, 0)))  # (L, n, m)
+        x = solve_cyclic_reduction(factor, jnp.transpose(rhs, (2, 1, 0)))  # (L, n, m)
         return layout.scatter(jnp.transpose(x, (2, 1, 0)), flat).reshape(r.shape)
 
     return solve

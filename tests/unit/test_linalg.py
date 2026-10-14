@@ -108,3 +108,20 @@ def test_shape_disagreement_is_rejected(system) -> None:
         solve_block_tridiagonal(
             factor_block_tridiagonal(lower, diag, upper), rhs[..., :-1]
         )
+
+
+@pytest.mark.parametrize("n", [1, 2, 3, 5, 8, 9, 11, 64, 67, 176])
+def test_cyclic_reduction_matches_thomas(n) -> None:
+    """The parallel factor solves the same system as the sequential one, to
+    round-off, for chain lengths on and off a power of two."""
+    from jaxaero.core.linalg import factor_cyclic_reduction, solve_cyclic_reduction
+
+    rng = np.random.default_rng(n)
+    shape = (n, 3, M, M)
+    lower, upper = rng.normal(size=shape), rng.normal(size=shape)
+    diag = rng.normal(size=shape) + 4.0 * M * np.eye(M)
+    lower[0] = upper[-1] = 0.0
+    rhs = rng.normal(size=(n, 3, M))
+
+    x = np.asarray(solve_cyclic_reduction(factor_cyclic_reduction(lower, diag, upper), rhs))
+    assert np.allclose(x, solve(lower, diag, upper, rhs), rtol=1e-12, atol=1e-13)

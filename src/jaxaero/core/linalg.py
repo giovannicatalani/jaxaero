@@ -113,3 +113,67 @@ def solve_block_tridiagonal(factor: BlockTridiagonalFactor, rhs: Array) -> Array
     _, d_hat = lax.scan(forward, zero, (factor.lower, factor.pivot_inverse, rhs))
     _, x = lax.scan(backward, zero, (factor.c_hat, d_hat), reverse=True)
     return x
+
+
+class CyclicReductionFactor(NamedTuple):
+    """Block cyclic-reduction factor, a pytree: per level ``(pivot_inverse,
+    lower, upper)`` of the even rows and the multipliers ``(alpha, gamma)`` of
+    the odd rows; ``last_inverse`` ``(1, ..., m, m)``."""
+
+    levels: tuple
+    last_inverse: Array
+
+
+def _previous(x: Array, n: int) -> Array:
+    """``x[j - 1]`` for ``j < n`` along axis 0, zero where out of range."""
+    return jnp.concatenate([jnp.zeros_like(x[:1]), x])[:n]
+
+
+def _next(x: Array, n: int) -> Array:
+    """``x[j + 1]`` for ``j < n`` along axis 0, zero where out of range."""
+    return jnp.concatenate([x[1:], jnp.zeros_like(x[:1])])[:n]
+
+
+def factor_cyclic_reduction(lower: Array, diag: Array, upper: Array) -> CyclicReductionFactor:
+    """The same system as ``factor_block_tridiagonal``, factored by odd-even
+    reduction: each level eliminates the even rows, leaving a block-tridiagonal
+    system on the odd ones, half as long,
+
+        alpha_o = L_o D_{o-1}^-1,  gamma_o = U_o D_{o+1}^-1,
+        D_o <- D_o - alpha_o U_{o-1} - gamma_o L_{o+1},
+        L_o <- -alpha_o L_{o-1},   U_o <- -gamma_o U_{o+1}.
+
+    ceil(log2 n) levels of batched block products instead of n sequential
+    steps, for about twice the flops; any length (a row past the end is zero).
+    Unpivoted, as the Thomas factor. Heller, SIAM J. Numer. Anal. 13 (1976);
+    Golub and Van Loan, *Matrix Computations*, 4th ed., 4.5.4."""
+    a, d, c = lower, diag, upper
+    levels = []
+    while d.shape[0] > 1:
+        odd = d.shape[0] // 2
+        inverse, low, upp = invert_blocks(d[0::2]), a[0::2], c[0::2]
+        alpha, gamma = a[1::2] @ inverse[:odd], c[1::2] @ _next(inverse, odd)
+        levels.append((inverse, low, upp, alpha, gamma))
+        a, d, c = (-alpha @ low[:odd],
+                   d[1::2] - alpha @ upp[:odd] - gamma @ _next(low, odd),
+                   -gamma @ _next(upp, odd))
+    return CyclicReductionFactor(tuple(levels), invert_blocks(d))
+
+
+def solve_cyclic_reduction(factor: CyclicReductionFactor, rhs: Array) -> Array:
+    """Apply a cyclic-reduction factor, ``(n, ..., m) -> (n, ..., m)``: reduce
+    the right-hand side level by level, then substitute back the even rows,
+    ``x_e = D_e^-1 (b_e - L_e x_{e-1} - U_e x_{e+1})``."""
+    b, evens = rhs, []
+    for _, _, _, alpha, gamma in factor.levels:
+        odd = b.shape[0] // 2
+        evens.append(b[0::2])
+        b = b[1::2] - _matvec(alpha, b[0::2][:odd]) - _matvec(gamma, _next(b[0::2], odd))
+    x = _matvec(factor.last_inverse, b)
+    for (inverse, low, upp, _, _), b_even in zip(reversed(factor.levels), reversed(evens)):
+        even, odd = b_even.shape[0], x.shape[0]
+        x_even = _matvec(inverse, b_even - _matvec(low, _previous(x, even))
+                         - _matvec(upp, jnp.concatenate([x, jnp.zeros_like(x[:1])])[:even]))
+        pairs = jnp.stack([x_even[:odd], x], axis=1).reshape((-1,) + x.shape[1:])
+        x = jnp.concatenate([pairs, x_even[odd:]])
+    return x
