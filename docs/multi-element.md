@@ -85,8 +85,11 @@ jaxaero examples/30p30n_sa
 
 Use the implicit solver with `van_albada`; high-lift flows at low Mach
 number converge slowly, so give it several thousand iterations (8000 here).
-The coarsest 30P30N level takes about 12 minutes on an A100. On a small
-GPU, run a grid of this size on a cluster instead.
+The coarsest 30P30N level (63,957 cells) runs its 8000 iterations in 7
+minutes on an A100 (49 ms each); its forces keep moving by a little more
+than the `forces_tol` bar, so it does not stop earlier. On a small GPU, run
+a grid of this size on a cluster instead. Its block sizes are odd, so
+`grid_sequencing` refuses it.
 
 The forces are printed for the whole configuration and for each body. On
 this coarsest level, at 5.5 degrees:

@@ -19,9 +19,11 @@ physics/      Euler, Navier-Stokes and SA pointwise functions
 mesh/         blocks and metrics (2D and 3D), meshes (patches, bodies, wall distance),
               the atlas (all blocks packed into one array; atlas3d: one 3D block),
               Plot3D and CGNS readers, assembly (interfaces and patch names; assemble3d),
-              3D sides (block3d: rectangles, O seams, poles), grid generation, quality
+              3D sides (block3d: rectangles, O seams, poles), grid generation, quality,
+              coarsening (grid sequencing: every other node, the solution carried back)
 geometry/     airfoil coordinates: file readers, NACA 4-digit, splines
-core/         state, configuration, constants, linear algebra
+core/         state, configuration, constants, linear algebra (block-tridiagonal:
+              cyclic reduction, Thomas as its reference)
 ```
 
 ## Dimensions
@@ -61,8 +63,8 @@ a default.
 ## Tests
 
 ```bash
-JAX_PLATFORMS=cpu python -m pytest tests -q -m "not slow"   # about 350 tests, 10 minutes
-JAX_PLATFORMS=cpu python -m pytest tests -q -m slow         # manufactured solutions, batched polars, 20 minutes
+JAX_PLATFORMS=cpu python -m pytest tests -q -m "not slow"   # about 400 tests, 5 minutes
+JAX_PLATFORMS=cpu python -m pytest tests -q -m slow         # manufactured solutions, batched polars, 17 minutes
 ```
 
 - `tests/unit/`: each piece on its own (fluxes, limiters, boundary

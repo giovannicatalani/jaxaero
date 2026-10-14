@@ -133,12 +133,13 @@ jaxaero my_airfoil
 python -m jaxaero.plot my_airfoil/results/clarky_sa
 ```
 
-On a 4 GB laptop GPU the Clark Y takes 25 minutes for 3000
-iterations (0.46 s each; an A100 is several times faster). The residual
-drops 8 orders, and CL stops changing after about 1500 iterations:
+On a 4 GB laptop GPU the Clark Y takes 6 minutes (0.29 s per iteration; an
+A100 is several times faster). It stops after 1160 iterations, once the
+forces have settled:
 
 ```
-CL = +0.801203   CD = +0.011022 (friction +0.007529)   CM = -0.075397
+settled after 1160 iterations, residual peak 1.704433e-05 -> 6.698344e-09 (3.41 orders from peak)
+CL = +0.801215   CD = +0.011022 (friction +0.007529)   CM = -0.075400
 ```
 
 The drag is for a fully turbulent boundary layer: SA has no transition
@@ -155,15 +156,17 @@ before running.
 
 ## 5. Is it converged?
 
-The log ends with the number of orders the residual dropped from its peak,
-and the lift is printed every block. Take the answer when the residual has
-dropped five or more orders and CL has stopped changing in the digits you
-care about. A run whose forces have settled (CL, CD and CM each moving
-less than `convergence.forces_tol`, 1e-4, over the last quarter of the
-iterations) stops by itself and says `settled`; `null` turns that off. If
-it stalls, raise `max_iters` first. A stall at two or three
-orders with an oscillating CL usually means a separated or unsteady flow,
-or a grid that is too coarse at the trailing edge.
+The forces are printed every block, and the log ends with the reason the
+run stopped and the orders the residual dropped from its peak. A run whose
+forces have settled (CL, CD and CM each moving less than
+`convergence.forces_tol`, 1e-4, over the last quarter of the iterations)
+stops by itself and says `settled`; the residual has then usually dropped
+three to five orders, and the forces would not change in the digits shown
+if you went on. A smaller `forces_tol` asks for more digits; `null` turns the
+test off and runs to `tol` or `max_iters`. A run that ends at `max_iters`
+has not settled: raise `max_iters` first. A residual stuck at two or three
+orders with an oscillating CL usually means a separated or unsteady flow, or
+a grid that is too coarse at the trailing edge.
 
 ## 6. A polar
 

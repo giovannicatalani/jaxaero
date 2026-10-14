@@ -1,16 +1,42 @@
 # JAX-Aero
 
-A steady airfoil and wing solver written in JAX: 2D, and 3D on single-block
-grids. It solves the compressible Euler, laminar Navier-Stokes and Spalart-Allmaras RANS equations with a
+Jaxaero is a Computational Fluid Dynamics solver written in Jax, conceived for steady 2D and 3D flow solutions over airfoil and wings, on structured meshes.
+It implements the numerical solution of compressible Euler, laminar Navier-Stokes and RANS equations (Spalart-Allmaras turbulence model) with a
 cell-centred finite-volume method on structured grids, in double precision,
 on CPU or GPU.
 
-You can mesh a single airfoil from its coordinate file, or read any
-structured grid (Plot3D or CGNS, one block or many), so multi-element
-high-lift sections work too; a 3D wing is a one-block Plot3D grid
-([docs/wing-3d.md](docs/wing-3d.md)). A case is two JSON files; you don't write any
-code. Results are checked against published data from NASA, AGARD and JAXA
-([validation/gallery](validation/gallery/README.md)).
+It is conceived as a research code on differentiable, GPU based solvers written in Python. It has been developed with the heavy use of Claude Code. It has been validated on several canonical cases, against existing solvers and experimental data ([validation/gallery](validation/gallery/README.md)). 
+
+In 2D, it supports automatic structured mesh generation around an airfoil from its coordinate file. Alternatively, an input mesh can be provided (Plot3D or CGNS, one block or many). Multi-element high lift sections can be simulated as well, provided that a multi-block structured mesh is provided as input.
+For a 3D wing, a one-block Plot3D grid
+([docs/wing-3d.md](docs/wing-3d.md)) must be provided.
+
+To launch a new case two config JSON files must be provided so you don't write any code. 
+
+
+## Gallery
+
+![ONERA M6 wing, wall pressure and tip vortex](docs/figures/readme_m6.png)
+
+**ONERA M6 wing**, SA RANS, M 0.84, alpha 3.06 deg, Re 14.6 million (NASA TMR
+case 2308): wall pressure with the sonic line (white) over the lambda shock,
+streamwise vorticity of the tip vortex behind the wing. 1,081,344 cells;
+57 minutes on one NVIDIA A100 (40 GB), 2,520 iterations from freestream to
+settled forces, without grid sequencing.
+
+![RAE 2822, Mach number](docs/figures/readme_rae2822.png)
+
+**RAE 2822 transonic airfoil**, SA RANS, M 0.729, alpha 2.31 deg, Re 6.5
+million (AGARD case 6): Mach number, the sonic line (white) closing on the
+shock, streamlines. 23,552 cells; 55 s on one NVIDIA A100, 760 iterations to
+settled forces.
+
+![30P30N three-element airfoil, flow speed](docs/figures/readme_30p30n.png)
+
+**30P30N slat, main element and flap**, SA RANS, M 0.17, alpha 5.5 deg, Re 1.71
+million (JAXA's 117-block grid): flow speed over the freestream's, streamlines
+through the slat and flap gaps, the slat-cove recirculation. 63,957 cells; 7
+minutes on one NVIDIA A100 (8,000 iterations).
 
 ## Install
 
@@ -21,7 +47,7 @@ pip install -e ".[plot,cgns]"
 For a GPU, install jax with CUDA support first
 ([instructions](https://docs.jax.dev/en/latest/installation.html)).
 
-## Run something
+## Run an existing example
 
 ```bash
 jaxaero examples/naca0012_euler

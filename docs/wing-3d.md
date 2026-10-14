@@ -130,15 +130,16 @@ jaxaero examples/onera_m6_sa
 ```
 
 ```
-     300  res 1.1982e-05 ( 1.05 orders)  CL = +0.231714   CD = +0.039755 (friction +0.005711)   CM = -0.175003   CY = +0.000908
-     600  res 7.6234e-10 ( 5.25 orders)  CL = +0.221072   CD = +0.038973 (friction +0.005306)   CM = -0.163561   CY = +0.000664
-    1500  res 1.1421e-13 ( 9.07 orders)  CL = +0.221072   CD = +0.038973 (friction +0.005306)   CM = -0.163561   CY = +0.000664
+     200  res 4.5504e-05 ( 0.47 orders)  CL = +0.241207   CD = +0.040561 (friction +0.006224)   CM = -0.185453   CY = +0.001046
+     300  res 7.5804e-06 ( 1.25 orders)  CL = +0.226177   CD = +0.039292 (friction +0.005443)   CM = -0.169032   CY = +0.000782
+     460  res 2.9867e-08 ( 3.65 orders)  CL = +0.221072   CD = +0.038973 (friction +0.005306)   CM = -0.163561   CY = +0.000664
+settled after 460 iterations, residual peak 1.343636e-04 -> 2.986654e-08 (3.65 orders from peak)
 ```
 
-Eight minutes on a laptop GPU (4 GB), 0.27 s per step; the forces are steady
-from step 600. `CY` is the side force. This level is far too coarse for the
-values to mean much (NASA's finest grids give CL 0.2693, CD 0.01696): it is
-there to try the workflow.
+Three and a half minutes on a laptop GPU (4 GB), 0.33 s per step; the run
+stops once the forces have settled (section 6). `CY` is the side force. This
+level is far too coarse for the values to mean much (NASA's finest grids give
+CL 0.2693, CD 0.01696): it is there to try the workflow.
 
 The result directory holds:
 
@@ -160,15 +161,18 @@ along the span, `k` round the section from the leading edge.)
 
 ## 6. Cost
 
-Measured on this wing, per implicit step:
+Measured on this wing (SA, case 2308), from freestream to settled forces:
 
-| cells | GPU | Euler | SA |
-|---|---|---|---|
-| 16,896 | laptop, 4 GB | 0.23 s | 0.27 s |
-| 135,168 | A100 / V100 | 0.12 s / 0.29 s | — / 0.34 s |
-| 1,081,344 | A100 | 0.86 s | 1.32 s |
+| cells | device | per step | steps | total |
+|---|---|---|---|---|
+| 16,896 | laptop GPU, 4 GB | 0.33 s | 460 | 3.5 min |
+| 135,168 | A100 40 GB | 0.13 s | 1,560 | 4.5 min |
+| 1,081,344 | A100 40 GB | 1.32 s | 2,520 | 57 min |
+| 1,081,344 | CPU node, 24 cores | 160 s | | (4.7 days at that rate) |
 
-Forces are steady after roughly 600 to 2500 steps, more on finer grids. The
+The 8.65-million-cell level of the family does not fit on a 40 GB GPU.
+
+Forces are steady after roughly 500 to 2500 steps, more on finer grids. The
 run stops there by itself (`settled`: CL, CD and CM each vary by less than
 `convergence.forces_tol`, 1e-4, over the last quarter of the iterations), or
 at `tol` or `max_iters`, whichever comes first; results are written at the
