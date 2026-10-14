@@ -95,7 +95,7 @@ def main(argv=None) -> int:
     U = U * (1.0 + 1e-3 * jnp.sin(jnp.arange(U.size).reshape(U.shape)))  # not a fixed point
 
     _, linear = jax.linearize(jop.residual, U)
-    li, lj = op.wave_speeds(U)
+    lambdas = op.wave_speeds(U)
     prepare = get_preconditioner(case.implicit.preconditioner)(op.atlas, g, op.viscosity, op.model, op.distance)
     cfl = jnp.asarray(100.0)
     step = jax.jit(implicit.make_newton_step(op, case.implicit, jop))
@@ -103,8 +103,8 @@ def main(argv=None) -> int:
     t = {
         "residual": timed(jax.jit(op.residual), U, repeats=args.repeats),
         "jvp": timed(jax.jit(linear), U, repeats=args.repeats),
-        "precond setup": timed(jax.jit(lambda u: prepare(u, li, lj, cfl)(u)), U, repeats=args.repeats),
-        "precond apply": timed(jax.jit(prepare(U, li, lj, cfl)), U, repeats=args.repeats),
+        "precond setup": timed(jax.jit(lambda u: prepare(u, lambdas, cfl)(u)), U, repeats=args.repeats),
+        "precond apply": timed(jax.jit(prepare(U, lambdas, cfl)), U, repeats=args.repeats),
         "newton step": timed(lambda s: step(s)[0].U, state, repeats=max(2, args.repeats // 3)),
     }
     device = jax.devices()[0]
