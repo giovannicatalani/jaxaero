@@ -29,6 +29,11 @@ each choice, grouped by module.
   the run stops at 940 of 6000 steps with the 6000-step forces to every
   printed digit; on the M6 135k level at 1600, the same forces to six digits
   whatever the Krylov settings.
+- **A frozen run stops as `stalled`, never `settled`.** When every step is
+  rejected the state does not move, so the forces are flat and would pass
+  the settledness test (a mis-started 1.08M M6 run stopped as settled after
+  260 steps that way). A block whose residual is bitwise constant is no
+  progress, whatever the equations.
 
 - **Convergence is judged from the running peak.** Started from uniform
   freestream, the first residual is near zero (every cell away from the wall

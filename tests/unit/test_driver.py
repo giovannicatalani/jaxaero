@@ -7,7 +7,6 @@ own peak, and the march must end only when every case is finished.
 from __future__ import annotations
 
 import jax.numpy as jnp
-import numpy as np
 
 from jaxaero.solvers.driver import ExitReason, run_to_steady
 
@@ -27,14 +26,14 @@ def test_a_single_case_converges_from_its_peak() -> None:
 
 
 def test_each_case_of_a_batch_is_judged_on_its_own() -> None:
-    _, history = run_to_steady(decay([0.5, 1.0, 0.9]), jnp.asarray([1.0, 3.0, 1e-3]),
+    _, history = run_to_steady(decay([0.5, 0.999, 0.9]), jnp.asarray([1.0, 3.0, 1e-3]),
                                max_iters=200, tol=1e-6, block_iters=10)
     assert history.residual.shape == (200, 3)
     assert history.case_reasons == (ExitReason.CONVERGED, ExitReason.MAX_ITERS, ExitReason.CONVERGED)
     assert history.reason == ExitReason.MAX_ITERS     # not every case converged
     # Case 2 starts 1000x smaller, but is judged against its own peak, not case 1's.
     assert history.case(2).converged and history.case(2).orders_dropped > 6.0
-    assert np.allclose(history.case(1).residual, 3.0)
+    assert not history.case(1).converged and history.case(1).orders_dropped < 0.1
 
 
 def test_the_march_stops_when_every_case_is_finished() -> None:
@@ -52,14 +51,23 @@ def test_a_non_finite_case_fails_alone() -> None:
 def test_the_caller_can_stop_the_march_as_settled() -> None:
     """``on_block`` returning true ends a run that has not reached ``tol``, as
     ``SETTLED``, at the end of that block."""
-    _, history = run_to_steady(decay(1.0), jnp.asarray(1.0), max_iters=1000, tol=1e-6, block_iters=10,
+    _, history = run_to_steady(decay(0.999), jnp.asarray(1.0), max_iters=1000, tol=1e-6, block_iters=10,
                                on_block=lambda b, state, residuals: b == 4)
     assert history.reason == ExitReason.SETTLED and not history.converged
     assert history.n_iters == 50
 
 
+def test_a_frozen_state_stalls_and_is_never_settled() -> None:
+    """A step that never changes the state (every update rejected) has a
+    constant residual and constant forces: it must stop as a failure, not as
+    settled."""
+    _, history = run_to_steady(lambda x: (x, x), jnp.asarray(1.0), max_iters=1000, tol=1e-6, block_iters=10,
+                               on_block=lambda b, state, residuals: True)
+    assert history.reason == ExitReason.STALLED and history.n_iters == 10
+
+
 def test_a_settled_stop_does_not_hide_a_failure() -> None:
-    _, history = run_to_steady(decay([1.0, jnp.inf]), jnp.asarray([1.0, 1.0]), max_iters=100, tol=1e-6,
+    _, history = run_to_steady(decay([0.999, jnp.inf]), jnp.asarray([1.0, 1.0]), max_iters=100, tol=1e-6,
                                block_iters=10, on_block=lambda b, state, residuals: True)
     assert history.case_reasons == (ExitReason.SETTLED, ExitReason.NON_FINITE)
     assert history.reason == ExitReason.NON_FINITE

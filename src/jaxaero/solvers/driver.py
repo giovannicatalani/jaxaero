@@ -31,6 +31,7 @@ class ExitReason:
     SETTLED = "settled"
     MAX_ITERS = "max_iters"
     NON_FINITE = "non_finite"
+    STALLED = "stalled"
 
 
 @dataclass
@@ -118,8 +119,9 @@ def run_to_steady(
     first residual (free-stream preservation), a degenerate reference.
     ``on_block(block, state, residuals)`` runs between blocks (the only place
     for I/O); returning true stops every running case as ``SETTLED`` (the
-    caller's own test, e.g. on forces). ``finite_check(state)`` is an optional
-    device-side health test.
+    caller's own test, e.g. on forces). A block in which a case's residual
+    does not change at all stops that case as ``STALLED``: no step was
+    taken. ``finite_check(state)`` is an optional device-side health test.
     """
     block = make_block(step, block_iters, devices)
     if devices is not None and len(devices) > 1:
@@ -153,6 +155,10 @@ def run_to_steady(
             failed[:] = True
         reasons[running & failed] = ExitReason.NON_FINITE
         reasons[running & ~failed & (peak > 0) & (last <= tol * peak)] = ExitReason.CONVERGED
+        # A whole block with bitwise the same residual: no step was accepted
+        # (the state is frozen), which would also look settled.
+        frozen = (len(columns) > 1) & np.all(columns == columns[0], axis=0)
+        reasons[(reasons == ExitReason.MAX_ITERS) & frozen] = ExitReason.STALLED
         if stop:
             reasons[reasons == ExitReason.MAX_ITERS] = ExitReason.SETTLED
         if not np.any(reasons == ExitReason.MAX_ITERS):
