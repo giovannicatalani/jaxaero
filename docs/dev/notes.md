@@ -22,8 +22,11 @@ each choice, grouped by module.
 
 ## solvers/driver.py
 
-- **Force-based stopping is the default** (`convergence.forces_tol` 1e-5,
-  the gallery's settledness test on CL, CD and CM). RANS residuals stall at
+- **Force-based stopping is the default** (`convergence.forces_tol` 1e-4,
+  the gallery's settledness bar, applied to CL, CD and CM). On the M6 1.08M
+  level from freestream it stops at 2540 steps with the forces within 3e-6 of
+  the 3000-step values; 1e-5 did not stop within 3000 (the last-quarter
+  window still holds the early drift). RANS residuals stall at
   round-off 10-11 orders down, and some cases at 2-3 (30P30N L1, NACA 0012
   at 0 deg) with the forces settled to six digits long before. On RAE 2822
   the run stops at 940 of 6000 steps with the 6000-step forces to every

@@ -159,7 +159,7 @@ The log ends with the number of orders the residual dropped from its peak,
 and the lift is printed every block. Take the answer when the residual has
 dropped five or more orders and CL has stopped changing in the digits you
 care about. A run whose forces have settled (CL, CD and CM each moving
-less than `convergence.forces_tol`, 1e-5, over the last quarter of the
+less than `convergence.forces_tol`, 1e-4, over the last quarter of the
 iterations) stops by itself and says `settled`; `null` turns that off. If
 it stalls, raise `max_iters` first. A stall at two or three
 orders with an oscillating CL usually means a separated or unsteady flow,

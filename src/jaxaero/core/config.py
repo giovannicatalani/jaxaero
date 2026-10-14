@@ -92,7 +92,7 @@ class NumericsConfig:
     cfl: float = 1.5
     max_iters: int = 40_000
     tol: float = 1.0e-12
-    forces_tol: float | None = 1.0e-5
+    forces_tol: float | None = 1.0e-4
     n_ghost: int = 2
     solver: str = "explicit"
     far_field: str = "characteristic"
