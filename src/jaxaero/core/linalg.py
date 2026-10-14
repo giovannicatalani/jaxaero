@@ -129,6 +129,11 @@ def _previous(x: Array, n: int) -> Array:
     return jnp.concatenate([jnp.zeros_like(x[:1]), x])[:n]
 
 
+def _first(x: Array, n: int) -> Array:
+    """``x[j]`` for ``j < n`` along axis 0, zero where out of range."""
+    return jnp.concatenate([x, jnp.zeros_like(x[:1])])[:n]
+
+
 def _next(x: Array, n: int) -> Array:
     """``x[j + 1]`` for ``j < n`` along axis 0, zero where out of range."""
     return jnp.concatenate([x[1:], jnp.zeros_like(x[:1])])[:n]
@@ -172,8 +177,7 @@ def solve_cyclic_reduction(factor: CyclicReductionFactor, rhs: Array) -> Array:
     x = _matvec(factor.last_inverse, b)
     for (inverse, low, upp, _, _), b_even in zip(reversed(factor.levels), reversed(evens)):
         even, odd = b_even.shape[0], x.shape[0]
-        x_even = _matvec(inverse, b_even - _matvec(low, _previous(x, even))
-                         - _matvec(upp, jnp.concatenate([x, jnp.zeros_like(x[:1])])[:even]))
+        x_even = _matvec(inverse, b_even - _matvec(low, _previous(x, even)) - _matvec(upp, _first(x, even)))
         pairs = jnp.stack([x_even[:odd], x], axis=1).reshape((-1,) + x.shape[1:])
         x = jnp.concatenate([pairs, x_even[odd:]])
     return x

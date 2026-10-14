@@ -165,11 +165,11 @@ def run_to_steady(
             break
 
     residual = np.concatenate(blocks) if blocks else np.zeros(0, dtype=np.float64)
-    failed = [r for r in reasons if r not in (ExitReason.CONVERGED, ExitReason.SETTLED)]
+    failures = [r for r in reasons if r not in (ExitReason.CONVERGED, ExitReason.SETTLED)]
     settled = ExitReason.SETTLED in reasons
     return state, ConvergenceHistory(
         residual=residual,
-        reason=failed[0] if failed else ExitReason.SETTLED if settled else ExitReason.CONVERGED,
+        reason=failures[0] if failures else ExitReason.SETTLED if settled else ExitReason.CONVERGED,
         n_iters=int(residual.shape[0]),
         seconds=time.perf_counter() - started,
         first_block_seconds=first_block,

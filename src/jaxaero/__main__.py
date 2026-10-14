@@ -56,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
               f"{forces.summary().splitlines()[0]}")
 
     def on_level(level, atlas):
-        name = f"coarse level {level} (every {2 ** level}th node)" if level else "the case's grid"
+        name = f"coarse level {level} (1/{2 ** level} of the nodes in each direction)" if level else "the case's grid"
         print(f"grid sequencing: {name}, {atlas.cells} cells")
 
     result = run(case, grid, progress=None if args.quiet else progress, on_level=on_level)

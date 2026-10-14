@@ -47,6 +47,14 @@ def _rect(rect, side: str):
                    period=pair(rect.period, "interface period"))
 
 
+def _sides(s):
+    if isinstance(s, Sides3D):
+        return Sides3D(tuple(_half(n, "a cell count") for n in s.shape),
+                       *(tuple(_rect(r, name) for r in s.side(name)) for name in SIDES_3D))
+    return BlockSides(_half(s.ni, "a cell count"), _half(s.nj, "a cell count"),
+                      *(tuple(_segment(seg, name) for seg in s.side(name)) for name in SIDES))
+
+
 def coarsen(mesh: Grid | Mesh) -> Mesh:
     """Every block with every other node.
 
@@ -54,16 +62,11 @@ def coarsen(mesh: Grid | Mesh) -> Mesh:
         ValueError: a cell count, a segment limit or an interface offset is odd.
     """
     out = []
-    for block in as_mesh(mesh):
-        s = block.sides
-        if isinstance(s, Sides3D):
-            sides = Sides3D(tuple(_half(n, "a cell count") for n in s.shape),
-                            *(tuple(_rect(r, name) for r in s.side(name))
-                              for name in SIDES_3D))
-        else:
-            sides = BlockSides(_half(s.ni, "a cell count"), _half(s.nj, "a cell count"),
-                               *(tuple(_segment(seg, name) for seg in s.side(name))
-                                 for name in SIDES))
+    for b, block in enumerate(as_mesh(mesh)):
+        try:
+            sides = _sides(block.sides)
+        except ValueError as error:
+            raise ValueError(f"block {b}: {error}") from None
         every_other = (slice(None),) + (slice(None, None, 2),) * block.dim
         out.append(Grid.from_node_array(np.asarray(block.nodes)[every_other], sides, np.asarray(block.nodes).dtype))
     return tuple(out)

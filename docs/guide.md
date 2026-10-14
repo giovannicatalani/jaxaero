@@ -46,6 +46,18 @@ print(result.forces.cl, result.forces.cd, result.history.orders_dropped)
 
 The validation cases in `validation/cases/` run the same way.
 
+A run stops at the first of: its forces settled (`settled`: CL, CD and CM each
+vary by less than `convergence.forces_tol`, 1e-4, over the last quarter of the
+iterations), the residual down by `tol` from its peak (`converged`), or
+`max_iters`. It also stops, as `stalled`, if a whole block of iterations left
+the state unchanged (every step rejected), and as `non_finite` on a NaN.
+`convergence.grid_sequencing = n` solves first on the grid coarsened `n`
+times (every other node each time) and starts each finer grid from the
+coarser solution: fewer iterations on a fine grid. Every block's cell counts
+and patch and interface limits must stay even (JAXA's 30P30N grids, for one,
+are refused at the start). Polars (below) run every angle to `tol` or
+`max_iters`, on the case's grid only.
+
 ## Output
 
 Results go to `<case>/results/<case_name>/`, or to `--out`:

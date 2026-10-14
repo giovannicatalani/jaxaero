@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- **Faster implicit solver on GPUs.** The line preconditioner solves its
+  block-tridiagonal chains by cyclic reduction instead of a sequential Thomas
+  sweep: on an A100 a Newton step takes 21.5 ms instead of 136 on RAE 2822,
+  127 instead of 186 on the ONERA M6 135k grid. Same solutions to round-off.
+- **Runs stop when their forces have settled** (`convergence.forces_tol`,
+  default 1e-4; `null` for the old behaviour): RAE 2822 in 940 iterations
+  instead of 6000 (57 s instead of 841 on an A100), with the same forces. New
+  exit reasons `settled` and `stalled` (no step accepted in a whole block).
+  Polars are unchanged (every angle to `tol` or `max_iters`).
+- **Grid sequencing** (`convergence.grid_sequencing`): solve first on the case's
+  grid coarsened by taking every other node, then start the finer grid from
+  it. On the ONERA M6 1.08M grid, 2.8x fewer fine-grid iterations to settled
+  forces. Single runs only; the grid must coarsen evenly.
+
 - `domain.trailing_edge = "close"` closes an open trailing edge so that a
   C-grid can be built round a downloaded coordinate file.
 - Airfoils are scaled to unit chord with the leading edge at the origin, so

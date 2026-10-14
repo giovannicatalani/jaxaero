@@ -80,3 +80,34 @@ def test_a_sequenced_run_solves_the_coarse_grid_first() -> None:
     (level,) = result.levels
     assert level["cells"] * 4 == result.cells and level["iterations"] > 0
     assert np.all(np.isfinite(np.asarray(result.U)))
+
+
+def test_a_coarsened_split_grid_is_the_coarsened_grid_split() -> None:
+    """Coarsening commutes with cutting a grid into blocks: the coarse 6-block
+    mesh (interfaces, the O seam, corners across blocks) has the coarse
+    single block's residual, cell for cell (the split-block gate,
+    tests/verification/test_multiblock.py)."""
+    import jax
+
+    from jaxaero.core.config import NumericsConfig
+    from jaxaero.mesh.atlas import build_atlas
+    from jaxaero.mesh.mesh import assign_conditions
+    from jaxaero.numerics.residual import make_residual
+
+    from ..single import Single
+    from ..verification.test_multiblock import FLOWS as FLOWS_2D, cut, join, o_grid, perturbed, split
+
+    kinds = {"wall": "no_slip_wall", "farfield": "far_field"}
+    grid = assign_conditions(o_grid(), kinds)[0]
+    mesh, _ = split(grid, (4, 16, 28), (4, 20))
+    (coarse_grid,) = coarsen(grid)
+    coarse_mesh = coarsen(mesh)
+    _, windows = split(coarse_grid, (2, 8, 14), (2, 10))
+    flow, numerics = FLOWS_2D["sa"], NumericsConfig(limiter="van_albada")
+    single = Single(coarse_grid, flow, numerics)
+    atlas = build_atlas(assign_conditions(coarse_mesh, kinds))
+    U = perturbed(single)
+    want = np.asarray(jax.jit(single.residual)(U))
+    got = join(atlas.unpack(jax.jit(make_residual(atlas, flow, numerics).residual)(atlas.pack(cut(U, windows)))),
+               windows, U)
+    assert np.allclose(got, want, rtol=1e-12, atol=1e-12 * np.abs(want).max())
