@@ -121,4 +121,5 @@ One entry per patch of the grid, `"<patch>": {"type": ..., "model": ...}`; a pat
 | `max_iters` | integer | `40000` | iteration ceiling |
 | `tol` | number | `1e-12` | residual drop from its running peak |
 | `forces_tol` | number or null | `0.0001` | stop once CL, CD and CM each vary by less than this over the last quarter of the iterations (at least four blocks there); null: run to `tol` or `max_iters` |
+| `grid_sequencing` | integer | `0` | solve first on this many coarser grids, each the next with every other node (cell counts, patch and interface limits must stay even), each to settled forces or `max_iters`, and start the next from it; 0: the grid only |
 | `block_iters` | integer | 200 explicit, 20 implicit | iterations per device call; forces are monitored at this interval |

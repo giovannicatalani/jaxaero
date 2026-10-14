@@ -38,7 +38,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         case = load_case(args.case, tuple(args.overrides))
         grid = case.grid()
-    except (CaseError, FileNotFoundError) as error:
+        if case.sequencing:
+            case.grid(coarsen=case.sequencing)       # fail now, not after the first levels
+    except (CaseError, FileNotFoundError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     print(f"{case.name}: {case.description}")
@@ -53,8 +55,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{iteration:8d}  res {residual:.4e} ({orders:5.2f} orders)  "
               f"{forces.summary().splitlines()[0]}")
 
-    result = run(case, grid, progress=None if args.quiet else progress)
+    def on_level(level, atlas):
+        name = f"coarse level {level} (every {2 ** level}th node)" if level else "the case's grid"
+        print(f"grid sequencing: {name}, {atlas.cells} cells")
+
+    result = run(case, grid, progress=None if args.quiet else progress, on_level=on_level)
     directory = result.write(args.out)
+    for k, level in enumerate(result.levels):
+        print(f"level {len(result.levels) - k}: {level['cells']} cells, {level['exit_reason']} after "
+              f"{level['iterations']} iterations, {level['seconds']:.1f} s")
     print(f"{result.history.summary()}\n{result.forces.summary()}\n{result.timing.summary()}\n"
           f"written to {directory}")
     physical, cell = first_bad_cell(result.U, case.flow.gamma, grid.dim)

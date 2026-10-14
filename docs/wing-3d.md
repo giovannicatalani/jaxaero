@@ -174,6 +174,12 @@ run stops there by itself (`settled`: CL, CD and CM each vary by less than
 at `tol` or `max_iters`, whichever comes first; results are written at the
 end.
 
+On a fine grid, `"convergence": {"grid_sequencing": 1}` (or 2, ...) solves first
+on the grid with every other node, and starts the case's grid from that
+solution: on the 1,081,344-cell level the forces settle within 1e-4 of their
+final values 2.8x sooner in fine-grid steps (620 against 1760). Every cell
+count, and every patch and interface limit, must stay even.
+
 ## 7. Finer grids of the example
 
 NASA does not ship the ONERA M6 grids but the program that makes them.

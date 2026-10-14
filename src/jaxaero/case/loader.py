@@ -15,6 +15,7 @@ from typing import Any
 from ..core import constants
 from ..core.config import FlowConditions, ImplicitConfig, NumericsConfig
 from ..mesh.atlas import Atlas, build_atlas
+from ..mesh.coarsen import coarsen as coarsen_mesh
 from ..mesh.mesh import assign_conditions, patches
 from ..mesh.quality import quality
 from . import schema
@@ -44,12 +45,16 @@ class Case:
     block_iters: int
     directory: Path
     raw: dict[str, Any] = field(compare=False, repr=False)
+    sequencing: int = 0
 
-    def grid(self) -> Atlas:
-        """The grid, every patch given its condition, packed for the solver."""
+    def grid(self, coarsen: int = 0) -> Atlas:
+        """The grid, every patch given its condition, packed for the solver;
+        ``coarsen`` times with every other node (grid sequencing)."""
         mesh = self.grid_spec.build(self.directory, self.numerics.dtype)
         kinds = resolve_conditions(self.conditions, patches(mesh), self.flow)
         mesh = assign_conditions(mesh, kinds)
+        for _ in range(coarsen):
+            mesh = coarsen_mesh(mesh)
         report = quality(mesh)
         if report.folded:
             raise CaseError(f"the grid has folded cells: {report.summary()}")
@@ -255,6 +260,8 @@ def parse_case(case_doc: dict, numerical_doc: dict, directory: Path = Path("."))
     block_iters = convergence["block_iters"] or (200 if numerics.solver == "explicit" else 20)
     if block_iters < 1:
         raise CaseError(f"'convergence.block_iters' must be >= 1, got {block_iters}")
+    if convergence["grid_sequencing"] < 0:
+        raise CaseError(f"'convergence.grid_sequencing' must be >= 0, got {convergence['grid_sequencing']}")
 
     directory = Path(directory)
     output = Path(general["save_path"])
@@ -270,6 +277,7 @@ def parse_case(case_doc: dict, numerical_doc: dict, directory: Path = Path("."))
         rk_scheme=rk_scheme,
         block_iters=block_iters,
         directory=directory,
+        sequencing=convergence["grid_sequencing"],
         raw={"case": case_doc, "numerical": numerical_doc},
     )
 

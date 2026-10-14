@@ -13,7 +13,7 @@ or validation, which live in ``validation/``.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
 
@@ -23,6 +23,7 @@ from jax import Array
 
 from .core.state import conservative_to_primitive
 from .mesh.atlas import Atlas
+from .mesh.coarsen import prolong
 from .mesh.quality import quality
 from .numerics.residual import make_residual
 from .case import Case
@@ -101,7 +102,8 @@ class Timing:
 @dataclass(frozen=True)
 class Result:
     """A run: ``U`` on the atlas canvas, ``(nvar, NI, NJ)`` (``grid.unpack`` gives
-    the blocks), and the lift at the end of every block, ``cl_history``."""
+    the blocks), and the lift at the end of every block, ``cl_history``;
+    ``levels``, the coarser grids solved first (grid sequencing), coarsest first."""
 
     case: Case
     grid: Atlas
@@ -110,6 +112,7 @@ class Result:
     history: ConvergenceHistory
     cl_history: np.ndarray
     timing: Timing
+    levels: tuple[dict, ...] = ()
 
     @property
     def seconds(self) -> float:
@@ -149,6 +152,7 @@ class Result:
                 "seconds": self.seconds,
                 "cl_spread": self.cl_spread,
                 "timing": self.timing.record(),
+                **({"grid_sequencing": list(self.levels)} if self.levels else {}),
                 **(extra or {}),
             },
         )
@@ -185,12 +189,34 @@ def make_stepper(case: Case, grid: Atlas, freestream: Array | None = None,
             explicit.initial_state(operator, dtype=numerics.dtype))
 
 
-def run(case: Case, grid: Atlas | None = None, progress: Progress | None = None) -> Result:
-    """March ``case`` to steady state on ``grid`` (default: ``case.grid()``)."""
+def run(case: Case, grid: Atlas | None = None, progress: Progress | None = None,
+        on_level: Callable[[int, Atlas], None] | None = None) -> Result:
+    """March ``case`` to steady state on ``grid`` (default: ``case.grid()``),
+    after its ``sequencing`` coarser grids, each started from the one before;
+    ``on_level(level, grid)`` announces each grid (0: the case's own)."""
     grid = case.grid() if grid is None else grid
+    levels, start = [], None
+    for level in range(case.sequencing, 0, -1):
+        coarse = case.grid(coarsen=level)
+        if on_level is not None:
+            on_level(level, coarse)
+        r = _march(case, coarse, progress, start)
+        levels.append({"cells": coarse.cells, "iterations": r.history.n_iters, "seconds": r.seconds,
+                       "exit_reason": r.history.reason, "cl": r.forces.cl, "cd": r.forces.cd})
+        start = (r.U, coarse)
+    if levels and on_level is not None:
+        on_level(0, grid)
+    return replace(_march(case, grid, progress, start), levels=tuple(levels))
+
+
+def _march(case: Case, grid: Atlas, progress: Progress | None, start: tuple[Array, Atlas] | None) -> Result:
+    """One grid to steady state, from freestream or from ``start``, a coarser
+    grid's solution ``(U, atlas)``."""
     flow, numerics = case.flow, case.numerics
     length = case.grid_spec.force_reference()
     step, state = make_stepper(case, grid)
+    if start is not None:
+        state = state._replace(U=prolong(*start, grid, state.U))
 
     cl_history: list[float] = []
     coefficients: list[tuple[float, float, float]] = []

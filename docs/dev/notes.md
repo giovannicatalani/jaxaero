@@ -101,6 +101,16 @@ each choice, grouped by module.
   for unstructured grids, not a slope-ratio limiter; fed `r = a/b` it returns
   `phi(1) = 3/4`, quietly losing second order.
 
+## mesh/coarsen.py
+
+- **Grid sequencing coarsens the case's own grid** (every other node, the
+  segments' indices halved), so it needs no second grid file and works for
+  generated, file and multi-block grids alike. Injection (each child takes its
+  parent's value) is enough: from the settled 135k M6 level, the 1.08M level
+  had its forces within 1e-4 of the 3000-step values for good from step 620,
+  against 1760 from freestream. The canvas padding cells must keep the
+  freestream start (a zero density there fails every step's physicality test).
+
 ## core/linalg.py
 
 - **The line solve is block cyclic reduction**, Thomas kept as the reference
