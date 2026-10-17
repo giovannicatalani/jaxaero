@@ -31,6 +31,8 @@ from pathlib import Path
 
 import numpy as np
 
+from scipy.interpolate import CubicSpline
+
 from .airfoil import Airfoil, from_points, read_airfoil
 
 ROLES = ("slat", "main", "flap")
@@ -43,6 +45,10 @@ LIP_MIN_TURN_DEG = 45.0
 
 TE_CORNER_DEG = 45.0
 """A closed contour's trailing-edge base ends at corners turning at least this."""
+
+CORNER_DEG = 30.0
+"""A contour point turning at least this is a corner: the surface is splined
+piecewise between corners, and grids put a node on each."""
 
 
 @dataclass(frozen=True)
@@ -191,6 +197,39 @@ def read_element(path: str | Path, role: str, scale: float = 1.0) -> Element:
 
 
 # --- Landmarks ------------------------------------------------------------------------------
+
+
+def corners(element: Element) -> np.ndarray:
+    """Indices of the contour's corners (its two ends excluded): the points turning at least ``CORNER_DEG``."""
+    a = element.airfoil
+    turn = np.abs(_turning(np.stack([a.x, a.y], axis=1), closed=False))
+    return np.flatnonzero(turn >= np.radians(CORNER_DEG))
+
+
+def surface(element: Element):
+    """``s -> (..., 2)``: the contour at arc lengths ``s``, a cubic spline in
+    arc length between consecutive corners (straight where a piece has two
+    points), so corners stay sharp."""
+    a = element.airfoil
+    p = np.stack([a.x, a.y], axis=1)
+    if a.sharp:
+        p[-1] = p[0]
+    breaks = np.concatenate([[0], corners(element), [a.x.size - 1]])
+    s = a.s
+    pieces = [(s[i], s[j], CubicSpline(s[i:j + 1], p[i:j + 1]) if j - i > 1 else None, p[i], p[j])
+              for i, j in zip(breaks[:-1], breaks[1:])]
+
+    def at(t):
+        t = np.clip(np.asarray(t, dtype=float), 0.0, a.length)
+        out = np.empty(t.shape + (2,))
+        for s0, s1, spline, p0, p1 in pieces:
+            here = (t >= s0) & (t <= s1)
+            out[here] = spline(t[here]) if spline is not None else \
+                p0 + ((t[here] - s0) / (s1 - s0))[:, None] * (p1 - p0)
+        return out
+
+    return at
+
 
 
 def chord_fraction(element: Element, points: np.ndarray) -> np.ndarray:

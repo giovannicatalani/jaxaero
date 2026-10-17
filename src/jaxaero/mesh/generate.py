@@ -123,17 +123,20 @@ def _second(a: np.ndarray, periodic: bool) -> np.ndarray:
 
 
 def march(line: np.ndarray, steps: np.ndarray, periodic: bool, outflow: np.ndarray | None = None,
-          smoothing: float = 3.0) -> np.ndarray:
+          smoothing: float | np.ndarray = 3.0) -> np.ndarray:
     """Layers marched from ``line`` ``(n, 2)``, one per step of ``steps``
-    (``(nj,)`` distances), ``(n, nj + 1, 2)``. ``periodic``: a closed line
+    (``(nj,)`` distances, or ``(n, nj)``: each node its own), ``(n, nj + 1, 2)``;
+    ``smoothing`` a number, or per node ``(n,)`` or per node and step ``(n, nj)``.
+    ``periodic``: a closed line
     (an O-grid, its last node not repeated). Otherwise the two end nodes stay
     on the lines through them along ``outflow`` (the wake direction), level
     with their neighbours."""
-    n, nj = len(line), len(steps)
+    n, nj = len(line), np.shape(steps)[-1]
+    steps = np.broadcast_to(steps, (n, nj))
     layers = np.empty((n, nj + 1, 2))
     layers[:, 0] = line
     r = line.copy()
-    for k, ds in enumerate(steps):
+    for k, ds in enumerate(steps.T):
         r_xi = _derivative(r, periodic)
         length2 = np.sum(r_xi**2, axis=1)
         area = ds * np.sqrt(length2)
@@ -157,8 +160,8 @@ def march(line: np.ndarray, steps: np.ndarray, periodic: bool, outflow: np.ndarr
         # is the same in every layer: grown from zero at the wall it let the
         # lines leaving an O-grid's sharp trailing edge cross (NACA 0012,
         # 128 x 96: 1622 folded cells at 0.2, none at a constant 3).
-        eps = smoothing
-        rhs = g + r - eps * _second(r, periodic)
+        eps = np.broadcast_to(smoothing, (n,)) if np.ndim(smoothing) < 2 else smoothing[:, k]
+        rhs = g + r - eps[:, None] * _second(r, periodic)
         rows, cols, vals = [], [], []
 
         def put(i, j, block):
@@ -169,9 +172,9 @@ def march(line: np.ndarray, steps: np.ndarray, periodic: bool, outflow: np.ndarr
         eye = np.eye(2)
         interior = range(n) if periodic else range(1, n - 1)
         for i in interior:
-            put(i, (i - 1) % n, -0.5 * C[i] - eps * eye)
-            put(i, i, (1.0 + 2.0 * eps) * eye)
-            put(i, (i + 1) % n, 0.5 * C[i] - eps * eye)
+            put(i, (i - 1) % n, -0.5 * C[i] - eps[i] * eye)
+            put(i, i, (1.0 + 2.0 * eps[i]) * eye)
+            put(i, (i + 1) % n, 0.5 * C[i] - eps[i] * eye)
         if not periodic:
             w = outflow / np.linalg.norm(outflow)
             m = np.array([-w[1], w[0]])
@@ -194,7 +197,7 @@ def _reach(wall: np.ndarray, outer: np.ndarray) -> float:
     return float(d.min())
 
 
-def _march_to(line, wall, cells_normal, first, far_field, iterations=4, **kwargs):
+def march_to(line, wall, cells_normal, first, far_field, iterations=4, **kwargs):
     """March so the outer layer lies ``far_field`` from the wall: the steps grow
     geometrically from ``first``; the linearized marching falls short where
     steps are large, so the total is corrected until it does (to 1%)."""
@@ -224,7 +227,7 @@ def o_grid(airfoil: Airfoil, cells_airfoil: int, cells_normal: int, wall_spacing
     else:
         x, y = x[:-1], y[:-1]
     line = np.stack([x, y], axis=1)
-    layers = _march_to(line, line, cells_normal, wall_spacing * c, far_field * c,
+    layers = march_to(line, line, cells_normal, wall_spacing * c, far_field * c,
                        periodic=True, smoothing=smoothing)
     layers = np.concatenate([layers, layers[:1]], axis=0)
     return layers[..., 0], layers[..., 1]
@@ -246,6 +249,6 @@ def c_grid(airfoil: Airfoil, cells_airfoil: int, cells_wake: int, cells_normal: 
     line_x = np.concatenate([wx[::-1], x[1:-1], wx])
     line_y = np.concatenate([wy[::-1], y[1:-1], wy])
     line = np.stack([line_x, line_y], axis=1)
-    layers = _march_to(line, np.stack([x, y], axis=1), cells_normal, wall_spacing * c, far_field * c,
+    layers = march_to(line, np.stack([x, y], axis=1), cells_normal, wall_spacing * c, far_field * c,
                        periodic=False, outflow=direction, smoothing=smoothing)
     return layers[..., 0], layers[..., 1]

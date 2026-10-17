@@ -1,0 +1,35 @@
+{
+    "general": {
+        "case_name": "main_flap_sa",
+        "description": "30P30N main element and flap (slat removed), SA RANS: M 0.17, alpha 5.5 deg, Re 1.71e6"
+    },
+    "domain": {
+        "grid": "multi_element",
+        "elements": [
+            {
+                "role": "main",
+                "file": "main.dat"
+            },
+            {
+                "role": "flap",
+                "file": "flap.dat"
+            }
+        ],
+        "wall_spacing": 1.5e-05,
+        "cells_per_chord": 150,
+        "notes": "The 30P30N's main element and flap as deployed (flap 30 deg, gap 1.27 %c), without the slat: a configuration with no published reference, for the generator's robustness and the solver's convergence. A wall spacing of 1.5e-5 gives y+ ~ 1 at this Reynolds number."
+    },
+    "freestream": {
+        "mach": 0.17,
+        "alpha_deg": 5.5,
+        "reynolds": 1710000.0,
+        "temperature": 295.56
+    },
+    "material_properties": {
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 110.4
+    },
+    "turbulence": {
+        "model": "sa_noft2"
+    }
+}

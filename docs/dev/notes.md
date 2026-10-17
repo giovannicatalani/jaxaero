@@ -136,6 +136,68 @@ each choice, grouped by module.
   30P30N L1 ran 2.1x slower per step (chains of 190 cells instead of 66) for
   no convergence gain; only a block's own j-cut (the C-grid wake) is crossed.
 
+## mesh/highlift.py, mesh/blocking.py (multi-element grids)
+
+Measured on the 30P30N's elements at 150 wall cells per chord (75.9k cells
+main + flap, 113k all three), quality as `tests/unit/test_highlift.py`
+measures it.
+
+- **One chain template, not three.** An O-layer's outer contour is rounded at
+  every trailing edge (and the 30P30N's are blunt), so a cut leaving the nose
+  tip meets the contour tangentially: blocks cannot be split there. The
+  families are compositions per element pair: a slot block over the
+  downstream element (left side the gap cut and the upstream base, top the
+  upstream wake), a cove block (upstream lip to base, gap cut, downstream
+  nose, mouth), a drop from every lip. Fill blocks have `j` from a wall where
+  they touch one.
+- **The gap is a side, never a chain member.** With the gap cut in the
+  chain of one block over everything, 80 i-lines packed into the 0.005 gap
+  ran up to the middle loop and Winslow's `psi` lost authority there (cells
+  of 0.004-0.007 against 3e-4 wanted, 95x across the cut). As a side of both
+  the cove and the slot it is 5-6x at worst, median 3.
+- **Wakes are offsets of the slot's floor.** A Hermite wake from a slat's
+  trailing edge cannot follow the main element's surface; the floor (the
+  downstream contour and wake) offset node for node, by the gap growing 10 %
+  per unit length, does, and gives the slot straight near-normal lines. The
+  normals are smoothed over two offsets and the curve over one, then the
+  nodes put back at their arc fractions (averaging alone slid them: 12.7x
+  at the main element's base); unsmoothed, the flap's base creased the main
+  wake (17-24x across it).
+- **Connectors fixed, each block smoothed alone.** Smoothing all blocks at
+  once with the connectors' nodes free (stencils across blocks) let corners
+  collapse where three blocks meet (the slat cusp folded); anchoring the
+  cuts' ends folded where anchored met free. Fixed Hermite cuts with spacing
+  matched at their ends: no fold in any family.
+- **Spacing control, iterated.** Thomas-Middlecoff `psi` interpolated from a
+  block's sides ignores the layer it sits on (first cells 10-20x the layer's
+  last step mid-block). `psi` from the heights wanted off the bottom and top
+  (per j line, from its end nodes alone) fixed the medians; three
+  GRAPE-style rounds (heights rescaled by sqrt(wanted/got)) brought the
+  concave-corner peak from 26.6x to 22.8x and medians to 1.1-1.4; more
+  rounds skewed the cove and slot (12 rounds: 11 deg) and cost 100 s.
+- **Near-wall layer.** Hyperbolic marching folds into a concave corner
+  (the main element's cove step) at any thickness above about a wall cell:
+  its smoothing is raised 31x there, ramped from zero at the wall so the
+  first steps stay normal; a residual fold halves the thickness round it and
+  marches again. A sharp convex corner (the slat cusp, 18 deg) twisted its
+  first cells until the corner's two neighbours were placed equally far
+  (the step is normal to the chord through them). The march's smoothing at
+  the wall tilted the first step 5-8 deg on the slat and main noses; from
+  zero at the wall (except within two nodes of a convex corner, whose fan
+  needs it) the wall is orthogonal to 0.05 deg. The first cell is
+  re-marched until within 1 % of the wall spacing (up to 6 passes; the
+  marching's area smoothing moved it 3-12 %).
+- **Targets not met yet.** Smallest angle 20 deg: 17.4 deg at the
+  main element's concave cove corner (one layer cell), 12.9 deg where the
+  cove narrows into the flap gap (66 cells), 16.4 deg where the slot's left
+  side turns from the gap cut onto the upstream base. Interface growth 1.3:
+  22.8x at the concave corner (the layer is thinned there and the cove's
+  lines fan), 5-7x round the gap; medians 1.1-1.4. Tried and dropped:
+  splitting the cove at its corner (to the downstream nose in proportion, or
+  at its nearest point: slivers of 0.1-7.5 deg), and starting the slot where
+  the channel narrows to three gaps (its left side then ran along the
+  ceiling, parallel to its floor, and folded).
+
 ## 3D
 
 - **Face vectors from the diagonals' cross product**, `S = (x_c - x_a) x

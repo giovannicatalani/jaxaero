@@ -26,6 +26,8 @@ from .domain import GRIDS
 
 REQUIRED = "required"
 GENERATED = ("o_grid", "c_grid")
+SECTION = ("multi_element",)
+MADE = GENERATED + SECTION
 
 
 @dataclass(frozen=True)
@@ -70,7 +72,8 @@ CASE: dict[str, tuple[Key, ...]] = {
     ),
     "domain": (
         Key("grid", "string", REQUIRED, "where the grid comes from: generated round one airfoil "
-            "(`o_grid`, `c_grid`) or read from a file", choices=_sorted(GRIDS)),
+            "(`o_grid`, `c_grid`) or round a slat, main element and flap (`multi_element`), or read from a file",
+            choices=_sorted(GRIDS)),
         Key("airfoil", "string", None, "`naca` + 4 digits (closed trailing edge; `naca0012_blunt` for the "
             "standard open one), or a coordinate file (Selig, Lednicer or two columns), scaled to unit chord",
             grids=GENERATED, required_for=GENERATED),
@@ -80,23 +83,39 @@ CASE: dict[str, tuple[Key, ...]] = {
         Key("cells_normal", "integer", None, "cells from the wall to the far field",
             grids=GENERATED, required_for=GENERATED),
         Key("wall_spacing", "number", None, "first-cell height, chords; for y+ ~ 1 see docs/own-airfoil.md",
-            grids=GENERATED, required_for=GENERATED),
+            grids=MADE, required_for=MADE),
         Key("trailing_edge", "string", "as_given", "`close` closes an open trailing edge (needed for a C-grid); "
             "`as_given` keeps it, and an O-grid meshes its base",
             choices=("as_given", "close"), grids=GENERATED),
         Key("far_field", "number", 100.0, "distance of the outer boundary from the airfoil, chords",
-            grids=GENERATED),
+            grids=MADE),
         Key("leading_edge_spacing", "number", Spacing.leading_edge, "surface cell length at the leading edge, "
-            "chords", grids=GENERATED),
+            "chords", grids=MADE),
         Key("trailing_edge_spacing", "number", Spacing.trailing_edge, "surface cell length at the trailing "
-            "edge, chords", grids=GENERATED),
+            "edge, chords", grids=MADE),
+        Key("elements", "list", [], "the section, front to back: `{\"role\": \"slat\"|\"main\"|\"flap\", "
+            "\"file\": F}` each (a coordinate file as for `airfoil`; leave `file` out when `domain.file` holds "
+            "all the curves), as deployed; a slat or flap may add `deflection_deg` (further deployed from the "
+            "given position: flap trailing edge down, slat leading edge down), `gap` (from the upstream trailing "
+            "edge to the downstream element) and `overlap` (along the main element's chord, positive when the "
+            "elements overlap) to be re-placed; docs/multi-element.md", grids=SECTION, required_for=SECTION),
+        Key("cells_per_chord", "integer", None, "wall cells per unit length (more where the wall is clustered)",
+            grids=SECTION, required_for=SECTION),
+        Key("layer_cells", "integer", 32, "cells across each element's near-wall layer", grids=SECTION),
+        Key("layer_thickness", "number", 0.02, "near-wall layer thickness, chords; thinner in gaps and "
+            "concave corners", grids=SECTION),
+        Key("gap_cells", "integer", 16, "least cells across a gap between elements", grids=SECTION),
+        Key("even_cells", "integer", 4, "every edge's cell count a multiple of this (4: two grid-sequencing "
+            "levels)", grids=SECTION),
         Key("file", "string", None, "the grid file: Plot3D (formatted or unformatted, either byte order, "
             "2D or 3D, single- or multi-block, iblank, gzip) or CGNS in HDF5 storage (structured zones; "
-            "`pip install h5py`)", grids=("file",), required_for=("file",)),
+            "`pip install h5py`); for `multi_element`, a file of curves holding every element (a point count, "
+            "then the points, per curve; curves join into closed contours)", grids=("file", "multi_element"),
+            required_for=("file",)),
         Key("format", "string", "auto", "`auto` reads it from the contents", choices=_sorted(FORMATS),
             grids=("file",)),
         Key("coordinate_scale", "number", 1.0, "factor on every coordinate, to the length the Reynolds "
-            "number is per (1/18 for a grid in inches with an 18 in chord)", grids=("file",)),
+            "number is per (1/18 for a grid in inches with an 18 in chord)", grids=("file", "multi_element")),
         Key("patches", "list", [], "rules naming the boundary faces the file does not name, first match "
             "wins: `{\"name\": N, \"x_min\": .., \"x_max\": .., \"y_min\": .., \"y_max\": ..}` (3D grids: "
             "also `z_min`, `z_max`), every bound optional", grids=("file",)),
