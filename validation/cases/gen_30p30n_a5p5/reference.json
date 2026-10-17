@@ -1,0 +1,29 @@
+{
+    "suite": "high_lift",
+    "order": 2,
+    "levels": [
+        {
+            "cells_per_chord": 100
+        },
+        {
+            "cells_per_chord": 150
+        },
+        {
+            "cells_per_chord": 225
+        }
+    ],
+    "reference": {
+        "cl": 2.8766,
+        "cd": 0.040224,
+        "cl_tol": 0.03,
+        "cd_tol": 0.1,
+        "isolates": "the multi-element generator: the same flow as jaxa_30p30n_a5p5 on generated grids",
+        "sources": [
+            "JAXA 2D RANS, APC-IV/V, validation/references/jaxa_30p30n/forces_rans_jaxa.dat (solver, grid and model not stated; SA likely)",
+            "this code on JAXA's L3 grid (jaxa_30p30n_a5p5): CL 2.87560",
+            "JAXA LWT2 Kevlar-wall 2017, mean Cp at AoAu 7 deg = open-air 5.5 deg, validation/references/jaxa_30p30n/cp_exp_aoa5.5.dat"
+        ],
+        "notes": "Judged as jaxa_30p30n_a5p5 is; the generator's own criterion is CL on the finest level within 0.5 % of this code on JAXA's L3, and CL monotone in the level."
+    },
+    "settled_cl_spread": 0.0001
+}

@@ -1,8 +1,9 @@
 # A multi-element airfoil
 
-The solver does not generate grids round several bodies. For a slat, main
-element and flap, or any geometry with coves and gaps, make a structured
-multi-block grid with your mesher and point the case at the file. The worked
+For a slat, main element and flap the solver can generate the grid
+(`"grid": "multi_element"`, [below](#generated-grids)); for any other
+geometry with coves and gaps, make a structured multi-block grid with your
+mesher and point the case at the file. The worked
 example is `examples/30p30n_sa`: the 30P30N three-element airfoil on JAXA's
 117-block grid (download instructions in `data/grids/README.md`).
 
@@ -120,3 +121,61 @@ trailing edge, with a `body` column to tell them apart.
   `boundary_conditions`; the message lists the grid's patch names.
 - *a 1-to-1 interface the file declares is not matched*: a CGNS file says two
   faces connect, but their nodes do not coincide.
+
+## Generated grids
+
+`"grid": "multi_element"` builds a multi-block grid round a main element with
+a flap behind it, a slat ahead of it, or both, from the elements' coordinates
+alone. The example is `examples/main_flap_sa` (the 30P30N without its slat);
+`validation/cases/gen_30p30n_a5p5` meshes the full 30P30N from the BANC curve
+file.
+
+```json
+"domain": {
+    "grid": "multi_element",
+    "elements": [{"role": "main", "file": "main.dat"},
+                 {"role": "flap", "file": "flap.dat", "deflection_deg": 5.0, "gap": 0.015}],
+    "wall_spacing": 1.5e-05,
+    "cells_per_chord": 150
+}
+```
+
+- **Elements** are listed front to back: `slat`, `main`, `flap` (the families
+  `main_flap`, `slat_main`, `slat_main_flap`). Each comes from a coordinate
+  file, as deployed, or all from one curve file in `domain.file` (per curve a
+  point count, then its points; the curves join into closed contours).
+- **Re-placing** a slat or flap: `deflection_deg` rotates it further deployed
+  from its given position (flap trailing edge down, slat leading edge down),
+  then `gap` (from the upstream trailing edge to the downstream element) and
+  `overlap` (along the main element's chord, positive when they overlap) set
+  its position; leave either out to keep it.
+- **Resolution**: `cells_per_chord` on the walls (clustered at edges and
+  corners), `wall_spacing` for the first cell (1.5e-5 chords is y+ ~ 1 at
+  Re 1.71e6), `layer_cells` and `layer_thickness` for each element's near-wall
+  layer (thinner in gaps and coves), `gap_cells` across a gap at least.
+  Every block's cell counts are multiples of `even_cells` (4: two grid
+  sequencing levels).
+
+![generated 30P30N grid](figures/grid_generated_30p30n.png)
+
+Each element has a near-wall layer, `j` from its wall; a front block wraps
+the first element's nose, a block runs over the first element and its wake,
+a slot block over each downstream element under the upstream wake (its left
+side the gap), a cove block in each cove, and blocks under the elements,
+split at each cove lip; a ring carries the grid to `far_field`.
+`python scripts/plot_blocks.py CASE --window x0 x1 y0 y1` draws the blocks.
+
+On the 30P30N at 150 cells per chord (113k cells): no folded cell; first cell
+within 1 % of `wall_spacing` and walls orthogonal to 0.05 deg away from
+trailing-edge and corner fans; cells as skewed as 13 deg where the main
+element's cove narrows into the flap gap; neighbouring cells across block
+interfaces within 1.4x of each other (median), up to 23x at the main
+element's cove corner. The grid builds in about a minute on a CPU.
+
+**Settings it takes** (`validation/highlift_envelope.py`, 43 settings round
+the 30P30N's, deflections from the given 30 deg): flap deflection 20 to 40
+deg, gap 0.5 to 3 %c, overlap -1 to +0.14 %c (+2 %c with a 3 %c gap); slat
+deflection 20 to 30 deg, gap 3 to 4 %c. Outside it the grid is refused,
+never built folded: a flap overlapping by 2 %c folds the cove block; a gap
+the placement cannot reach (0.5 %c at -1 %c overlap) or a slat gap of
+1.5 %c is refused by the placement.

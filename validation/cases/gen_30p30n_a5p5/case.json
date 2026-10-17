@@ -1,0 +1,50 @@
+{
+    "general": {
+        "case_name": "gen_30p30n_a5p5",
+        "description": "30P30N three-element high-lift airfoil (JAXA modified slat config F) on generated grids, SA-noft2, M 0.17, alpha 5.5 deg, Re 1.71e6 (stowed chord)"
+    },
+    "domain": {
+        "grid": "multi_element",
+        "file": "../../references/jaxa_30p30n/2010_30p30n_thik_te.crv",
+        "coordinate_scale": 0.05555555555555555,
+        "elements": [
+            {
+                "role": "slat"
+            },
+            {
+                "role": "main"
+            },
+            {
+                "role": "flap"
+            }
+        ],
+        "wall_spacing": 1.5e-05,
+        "cells_per_chord": 100,
+        "notes": "The BANC curves (inches, 18 in stowed chord) meshed by the multi-element generator; the levels refine cells_per_chord by 1.5. A wall spacing of 1.5e-5 chords gives y+ ~ 1, as on JAXA's L1."
+    },
+    "boundary_conditions": {
+        "wall": {
+            "type": "no_slip_wall"
+        },
+        "farfield": {
+            "type": "far_field"
+        }
+    },
+    "freestream": {
+        "mach": 0.17,
+        "alpha_deg": 5.5,
+        "reynolds": 1710000.0,
+        "temperature": 295.56,
+        "notes": "APC-IV/V 2D task (JAXA); 5.5 deg is the open-air angle equivalent to the wind tunnel's 7 deg."
+    },
+    "material_properties": {
+        "specific_heat_ratio": 1.4,
+        "dynamic_viscosity": "sutherland",
+        "sutherland_temperature": 110.4,
+        "prandtl_number": 0.72
+    },
+    "turbulence": {
+        "model": "sa_noft2",
+        "freestream_nu_tilde_ratio": 3.0
+    }
+}

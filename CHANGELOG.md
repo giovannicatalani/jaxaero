@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Generated multi-element grids** (`domain.grid = "multi_element"`): a slat,
+  main element and flap meshed from their coordinates, optionally re-placed by
+  deflection, gap and overlap (docs/multi-element.md). New example
+  `main_flap_sa`; validation case `gen_30p30n_a5p5` (the 30P30N on generated
+  grids); `scripts/plot_blocks.py` draws a grid's blocks.
 - **Faster implicit solver on GPUs.** The line preconditioner solves its
   block-tridiagonal chains by cyclic reduction instead of a sequential Thomas
   sweep: on an A100 a Newton step takes 21.5 ms instead of 136 on RAE 2822,
