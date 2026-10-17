@@ -1,9 +1,9 @@
 """The block-graph core: counts, transfinite interpolation, elliptic smoothing.
 
 Synthetic graphs whose answers are known: a bilinear map, a quarter annulus
-cut into one or three blocks (the global smoothing makes them the same
-grid), a 2 x 2 square under a bump; the output must assemble with
-coincident interfaces and pass the quality checks.
+in one block and cut along its own lines into three, a 2 x 2 square under a
+bump; the output must assemble with coincident interfaces and pass the
+quality checks.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import pytest
 
 from jaxaero.mesh.assemble import assemble
 from jaxaero.mesh.blocking import (Block, cell_areas, chain_nodes, distribute, fill, raw_blocks, smooth,
-                                   solve_counts, tfi)
+                                   solve_counts, tfi, unfolded, winslow)
 from jaxaero.mesh.generate import geometric
 from jaxaero.mesh.quality import _cell_angles, quality
 
@@ -64,44 +64,65 @@ def test_contradicting_counts_are_refused() -> None:
         solve_counts(blocks, {"x": 2, "y": 2, "l": 2, "r": 2})
 
 
-def _annulus(cuts):
-    """A quarter annulus r in [1, 2], cut along ``cuts`` (degrees) into blocks;
-    36 cells round, 16 out, geometric from 0.02."""
+def _annulus(cuts, rays=None):
+    """A quarter annulus r in [1, 2] cut along ``cuts`` (degrees) into blocks,
+    36 cells round, 16 out, geometric from 0.02; ``rays``: the cut lines'
+    nodes, else straight."""
     radii = 1.0 + geometric(16, 0.02, 1.0)
     angles = [0.0] + list(cuts) + [90.0]
     nodes, blocks = {}, []
     for k, a in enumerate(angles):
         nodes[f"ray{k}"] = _ray(a, radii)
+    for k, r in (rays or {}).items():
+        nodes[f"ray{k}"] = r
     for k in range(len(angles) - 1):
         n = round(36 * (angles[k + 1] - angles[k]) / 90.0)
         nodes[f"in{k}"], nodes[f"out{k}"] = _arc(1.0, angles[k], angles[k + 1], n), _arc(2.0, angles[k], angles[k + 1], n)
         blocks.append(Block(f"b{k}", ((f"in{k}", False),), ((f"ray{k + 1}", False),), ((f"out{k}", False),),
                             ((f"ray{k}", False),)))
-    fixed = {e for e in nodes if not e.startswith("ray")} | {"ray0", f"ray{len(angles) - 1}"}
-    return blocks, nodes, fixed
+    return blocks, nodes
 
 
 def _skew(grid):
     return 90.0 - _cell_angles(grid[..., 0], grid[..., 1])
 
 
+def _shaken(grids, seed=0):
+    """Interiors moved at random, so the smoother has work to do."""
+    rng, out = np.random.default_rng(seed), {}
+    for name, g in grids.items():
+        g = g.copy()
+        g[1:-1, 1:-1] += rng.uniform(-0.01, 0.01, g[1:-1, 1:-1].shape)
+        out[name] = g
+    return out
+
+
 def test_a_quarter_annulus_is_the_same_grid_in_one_block_or_three() -> None:
-    one = _annulus([])
-    three = _annulus([30.0, 60.0])
-    rng = np.random.default_rng(0)
+    # With the cell heights off the walls given (spacing control, one round:
+    # the corrections of later rounds stop at the cuts), every j line takes
+    # its control from its own length, so the block equations do not depend
+    # on how the annulus is cut: cut along the single block's own lines
+    # i = 12 and 24, three blocks reproduce it.
+    first, last = 2e-3, 0.1
+    blocks, nodes = _annulus([])
+    grids = fill(blocks, nodes)
+    one = smooth(_shaken(grids), {"b0": (np.full(37, first), np.full(37, last))}, tol=1e-13, iterations=500,
+                 rounds=1)["b0"]
+    blocks, nodes = _annulus([30.0, 60.0], rays={1: one[12], 2: one[24]})
+    spacing = {b.name: (np.full(13, first), np.full(13, last)) for b in blocks}
+    three = smooth(_shaken(fill(blocks, nodes), seed=1), spacing, tol=1e-13, iterations=500, rounds=1)
+    joined = np.concatenate([three["b0"], three["b1"][1:], three["b2"][1:]], axis=0)
+    assert np.max(np.hypot(*(joined - one).transpose(2, 0, 1)) / _nearest(one)) < 1e-6
 
-    def shaken(grids):                     # interiors moved, so the smoother has work to do
-        out = {}
-        for name, g in grids.items():
-            g = g.copy()
-            g[1:-1, 1:-1] += rng.uniform(-0.01, 0.01, g[1:-1, 1:-1].shape)
-            out[name] = g
-        return out
 
-    g1 = smooth(one[0], one[1], shaken(fill(one[0], one[1])), one[2], tol=1e-13, iterations=500)["b0"]
-    g3 = smooth(three[0], three[1], shaken(fill(three[0], three[1])), three[2], tol=1e-13, iterations=500)
-    joined = np.concatenate([g3["b0"], g3["b1"][1:], g3["b2"][1:]], axis=0)
-    np.testing.assert_allclose(joined, g1, atol=1e-9)
+def _nearest(grid):
+    """Each node's distance to its nearest neighbour along i or j."""
+    d = np.full(grid.shape[:2], np.inf)
+    di = np.hypot(*np.diff(grid, axis=0).transpose(2, 0, 1))
+    dj = np.hypot(*np.diff(grid, axis=1).transpose(2, 0, 1))
+    d[1:], d[:-1] = np.minimum(d[1:], di), np.minimum(d[:-1], di)
+    d[:, 1:], d[:, :-1] = np.minimum(d[:, 1:], dj), np.minimum(d[:, :-1], dj)
+    return d
 
 
 def _bump_square():
@@ -122,25 +143,19 @@ def _bump_square():
               Block("se", (("f1", False),), (("r0", False),), (("ce", False),), (("cs", False),)),
               Block("nw", (("cw", False),), (("cn", False),), (("t0", False),), (("l1", False),)),
               Block("ne", (("ce", False),), (("r1", False),), (("t1", False),), (("cn", False),))]
-    fixed = {"f0", "f1", "r0", "r1", "t0", "t1", "l0", "l1"}
-    return blocks, nodes, fixed
+    return blocks, nodes
 
 
-def test_smoothing_keeps_fixed_nodes_reduces_skew_and_assembles() -> None:
-    blocks, nodes, fixed = _bump_square()
-    # bend the inner cut lines, as a poor starting point
-    for e in ("cs", "cw", "cn", "ce"):
-        t = np.linspace(0, 1, len(nodes[e]))
-        nodes[e] = nodes[e] + 0.08 * np.sin(np.pi * t)[:, None] * np.array([1.0, -1.0])
-    start = fill(blocks, nodes)
-    out = smooth(blocks, nodes, start, fixed)
+def test_smoothing_keeps_the_sides_reduces_skew_and_assembles() -> None:
+    blocks, nodes = _bump_square()
+    start = _shaken(fill(blocks, nodes))
+    out = smooth(start)
     for b in blocks:
         g = out[b.name]
         assert np.all(cell_areas(g) > 0)
         for s, idx in (("bottom", (slice(None), 0)), ("top", (slice(None), -1)),
                        ("left", (0, slice(None))), ("right", (-1, slice(None)))):
-            if all(e in fixed for e, _ in b.side(s)):
-                np.testing.assert_allclose(g[idx], chain_nodes(b.side(s), nodes), rtol=0, atol=1e-15)
+            np.testing.assert_allclose(g[idx], chain_nodes(b.side(s), nodes), rtol=0, atol=1e-15)
     worst = lambda grids: max(_skew(g).max() for g in grids.values())  # noqa: E731
     mean = lambda grids: np.mean(np.concatenate([_skew(g).ravel() for g in grids.values()]))  # noqa: E731
     assert worst(out) < worst(start) and mean(out) < 0.5 * mean(start)
@@ -152,7 +167,20 @@ def test_smoothing_keeps_fixed_nodes_reduces_skew_and_assembles() -> None:
     assert not q.folded and q.min_angle_deg > 45.0 and q.max_growth < 1.3
 
 
-def test_a_free_edge_must_join_two_blocks() -> None:
-    blocks, nodes, fixed = _bump_square()
-    with pytest.raises(ValueError, match="free edge"):
-        smooth(blocks, nodes, fill(blocks, nodes), fixed - {"f0"})
+def test_spacing_control_gives_the_first_cells_asked_for() -> None:
+    blocks, nodes = _annulus([])
+    grid = fill(blocks, nodes)["b0"]
+    first = np.full(grid.shape[0], 2e-3)               # the sides' own first cell is 0.02
+    out = winslow(_shaken({"b": grid})["b"], first, np.full(grid.shape[0], 0.1), tol=1e-12, iterations=500)
+    height = np.hypot(*(out[:, 1] - out[:, 0]).T)
+    assert np.all(cell_areas(out) < 0)                 # i round counter-clockwise, j out: left-handed
+    # within 5 % (the rounds' tolerance) away from the sides, whose own first
+    # cell is ten times larger
+    np.testing.assert_allclose(height[6:-6], 2e-3, rtol=0.05)
+
+
+def test_a_fold_is_refused() -> None:
+    grid = np.stack(np.meshgrid(np.linspace(0, 1, 5), np.linspace(0, 1, 5), indexing="ij"), axis=-1)
+    grid[2, 2] = [1.5, 1.5]
+    with pytest.raises(ValueError, match="folds"):
+        unfolded({"b": grid})
