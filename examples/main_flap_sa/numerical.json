@@ -9,7 +9,8 @@
         "max_relative_update": 0.2
     },
     "convergence": {
-        "max_iters": 8000,
-        "grid_sequencing": 2
+        "max_iters": 15000,
+        "grid_sequencing": 0,
+        "notes": "From freestream: the coarsened grids (every other node) settle on a stalled, separated flow that the fine grid then takes thousands of iterations to wash out (CL 2.78 and still rising after 8000 at 113k cells, against 2.808 settled in 9880 from freestream)."
     }
 }
