@@ -163,3 +163,10 @@ def test_one_file_per_element_with_a_scale(tmp_path) -> None:
     path.write_text("flap\n" + "\n".join(f"{x:.12f} {y:.12f}" for x, y in zip(a.x, a.y)))
     e = read_element(path, "flap", scale=0.3)
     assert e.role == "flap" and e.airfoil.chord == pytest.approx(0.3)
+
+
+def test_a_gap_out_of_reach_names_the_smallest_there(thirty_p) -> None:
+    slat, main, flap = thirty_p
+    with pytest.raises(ValueError, match=r"out of reach at an overlap of -0.024.*at least 0.024"):
+        place(slat, main, 0.0, 0.015, None)        # the slat's trailing edge 2.4 %c ahead of the nose
+    assert gap(place(slat, main, 0.0, 0.015, -0.01), main) == pytest.approx(0.015, abs=1e-10)

@@ -343,5 +343,9 @@ def place(element: Element, main: Element, deflection_deg: float = 0.0, gap_: fl
         n = (te - p) / np.hypot(*(te - p))
         J = np.array([sign * n, sign * main.chord_direction])     # d(gap, overlap)/d(shift)
         shift = shift - np.linalg.solve(J, f)
-    raise ValueError(f"placing the {element.role}: gap {gap_} and overlap {overlap_} not reached "
-                     f"(residual {np.max(np.abs(f)):.2e})")
+    # Not reached: at that overlap, what gaps can the element take?
+    across = np.array([-main.chord_direction[1], main.chord_direction[0]])
+    on = moved.moved(shift=sign * (target[1] - overlap(*up_down(moved), main)) * main.chord_direction)
+    reach = [gap(*up_down(on.moved(shift=t * across))) for t in np.linspace(-0.2, 0.2, 401) * main.airfoil.chord]
+    raise ValueError(f"placing the {element.role}: a gap of {target[0]:.4g} is out of reach at an overlap of "
+                     f"{target[1]:.4g} (the gap there is at least {min(reach):.4g})")

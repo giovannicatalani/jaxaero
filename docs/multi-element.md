@@ -175,7 +175,8 @@ element's cove corner. The grid builds in about a minute on a CPU.
 **Settings it takes** (`validation/highlift_envelope.py`, 43 settings round
 the 30P30N's, deflections from the given 30 deg): flap deflection 20 to 40
 deg, gap 0.5 to 3 %c, overlap -1 to +0.14 %c (+2 %c with a 3 %c gap); slat
-deflection 20 to 30 deg, gap 3 to 4 %c. Outside it the grid is refused,
-never built folded: a flap overlapping by 2 %c folds the cove block; a gap
-the placement cannot reach (0.5 %c at -1 %c overlap) or a slat gap of
-1.5 %c is refused by the placement.
+deflection 20 to 30 deg, gap 1.5 to 4 %c (under 2.4 %c with the overlap
+brought to -1 %c: at its given -2.4 %c the slat cannot come nearer). Outside
+it the grid is refused, never built folded: a flap overlapping by 2 %c folds
+the cove block, and a gap out of reach at the asked overlap is refused with
+the smallest gap there.

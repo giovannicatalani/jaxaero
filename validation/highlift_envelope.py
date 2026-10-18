@@ -44,9 +44,10 @@ def sample() -> list[dict]:
     with the flap as given, and the extreme corners of both."""
     out = [{"flap": f, "slat": GIVEN["slat"]}
            for f in itertools.product((-10.0, 0.0, 10.0), (0.005, 0.0127, 0.03), (-0.01, 0.0014, 0.02))]
-    out += [{"flap": GIVEN["flap"], "slat": (d, g, None)}
+    # a slat gap under its given overlap's 2.4 %c is out of reach: the small gaps at -1 %c
+    out += [{"flap": GIVEN["flap"], "slat": (d, g, None if g > 0.025 else -0.01)}
             for d, g in itertools.product((-10.0, -5.0, 0.0), (0.015, 0.0295, 0.04)) if (d, g) != (0.0, 0.0295)]
-    out += [{"flap": (fd, fg, 0.0014), "slat": (sd, sg, None)}
+    out += [{"flap": (fd, fg, 0.0014), "slat": (sd, sg, None if sg > 0.025 else -0.01)}
             for fd, fg, sd, sg in itertools.product((-10.0, 10.0), (0.005, 0.03), (-10.0,), (0.015, 0.04))]
     return out
 
