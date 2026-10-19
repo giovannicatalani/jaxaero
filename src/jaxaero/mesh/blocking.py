@@ -25,9 +25,9 @@ run along ``i`` (at ``j = 0`` and ``j = nj``), ``left`` and ``right`` along
    taken from the spacing along the block's sides, ``phi`` interpolated
    between bottom and top, ``psi`` between left and right, so the sides'
    clustering carries into the interior; or ``psi`` from the cell heights
-   wanted off the bottom and top (spacing control, as GRAPE's: Sorenson,
-   NASA TM-81198, 1980, here without its iteration), so a block continues
-   the cells of the layer it is built on. Each Picard step freezes the
+   wanted off the bottom and top (spacing control, corrected over a few
+   rounds as GRAPE's controls are: Sorenson, NASA TM-81198, 1980), so a
+   block continues the cells of the layer it is built on. Each Picard step freezes the
    coefficients and solves the linear system. The edges between blocks are
    not moved: their shape and spacing are the template's (smoothing them too,
    with stencils across the blocks, let corners collapse where three blocks
@@ -146,11 +146,11 @@ def chain_nodes(chain: Chain, nodes: dict[str, np.ndarray]) -> np.ndarray:
     Raises:
         ValueError: if consecutive edges do not meet.
     """
-    parts = [nodes[e][::-1] if rev else nodes[e] for e, rev in chain]
-    for (e, _), a, b in zip(chain, parts[:-1], parts[1:]):
-        if np.hypot(*(a[-1] - b[0])) > 1e-9 * max(np.ptp(a, axis=0).max(), 1e-300):
+    for (e, rev), (f, rev_next) in zip(chain[:-1], chain[1:]):
+        end, start = nodes[e][0 if rev else -1], nodes[f][-1 if rev_next else 0]
+        if np.hypot(*(end - start)) > 1e-9 * max(np.ptp(nodes[e], axis=0).max(), 1e-300):
             raise ValueError(f"edge {e!r} does not end where the next edge of its side begins")
-    return np.concatenate([parts[0]] + [p[1:] for p in parts[1:]])
+    return chain_values(chain, nodes)
 
 
 def tfi(bottom: np.ndarray, right: np.ndarray, top: np.ndarray, left: np.ndarray) -> np.ndarray:
@@ -334,4 +334,5 @@ def cell_areas(grid: np.ndarray) -> np.ndarray:
 
 
 def raw_blocks(grids: dict[str, np.ndarray]) -> list[RawBlock]:
+    """The blocks as ``assemble`` takes them, named."""
     return [RawBlock(g[..., 0].copy(), g[..., 1].copy(), name=name) for name, g in grids.items()]

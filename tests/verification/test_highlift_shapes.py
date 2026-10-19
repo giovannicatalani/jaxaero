@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "unit"))
 from test_elements import _cove_main, _synthetic_slat  # noqa: E402
 
 from jaxaero.geometry.airfoil import Airfoil, from_points, naca4  # noqa: E402
-from jaxaero.geometry.elements import Element, gap, place  # noqa: E402
+from jaxaero.geometry.elements import Element, fan_points, gap, place  # noqa: E402
 from jaxaero.mesh.assemble import assemble  # noqa: E402
 from jaxaero.mesh.coarsen import coarsen  # noqa: E402
 from jaxaero.mesh.highlift import Settings, multi_element  # noqa: E402
@@ -80,13 +80,13 @@ def test_a_synthetic_section_builds(name) -> None:
     assert info.bodies == len(elements) and set(info.patch_faces) == {"wall", "farfield"}
     assert info.interface_mismatch < 1e-12 and not quality(mesh).folded
     coarsen(coarsen(mesh))
-    # outside the trailing-edge fans (2 % of the overall chord), as skewed as the 30P30N at worst
-    tes = np.array([e.trailing_edge for e in elements])
+    # outside the fans (trailing edges and convex corners), as skewed as the 30P30N at worst
+    fans = np.concatenate([fan_points(e) for e in elements])
     worst = 90.0
     for g in mesh:
         x, y = np.asarray(g.x_node), np.asarray(g.y_node)
         cx, cy = 0.25 * (x[1:, 1:] + x[:-1, 1:] + x[1:, :-1] + x[:-1, :-1]), 0.25 * (y[1:, 1:] + y[:-1, 1:] + y[1:, :-1] + y[:-1, :-1])
-        far = np.min(np.hypot(cx[..., None] - tes[:, 0], cy[..., None] - tes[:, 1]), axis=-1) > 0.04
+        far = np.min(np.hypot(cx[..., None] - fans[:, 0], cy[..., None] - fans[:, 1]), axis=-1) > 0.04
         if far.any():
             worst = min(worst, float(_cell_angles(x, y)[far].min()))
     assert worst >= 15.0, f"{name}: cells as skewed as {worst:.1f} deg"

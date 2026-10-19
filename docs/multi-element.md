@@ -124,11 +124,79 @@ trailing edge, with a `body` column to tell them apart.
 
 ## Generated grids
 
-`"grid": "multi_element"` builds a multi-block grid round a main element with
-a flap behind it, a slat ahead of it, or both, from the elements' coordinates
-alone. The example is `examples/main_flap_sa` (the 30P30N without its slat);
-`validation/cases/gen_30p30n_a5p5` meshes the full 30P30N from the BANC curve
-file.
+`"grid": "multi_element"` builds the multi-block grid of a slat, main element
+and flap from their coordinates alone, in about a minute on a CPU. The
+examples are `examples/main_flap_sa` (the 30P30N without its slat, one file
+per element) and `validation/cases/gen_30p30n_a5p5` (the full 30P30N from
+one curve file).
+
+### When it applies
+
+- **The arrangement**: a main element with a flap behind it, a slat ahead of
+  it, or both (`main`+`flap`, `slat`+`main`, `slat`+`main`+`flap`, listed
+  front to back), each trailing edge over the nose of the element behind it,
+  as deployed in a single-slotted high-lift section. Not covered: two slats
+  or two flaps (double- and triple-slotted systems), Krueger flaps, vanes,
+  tabs, or elements side by side; for those, mesh with your own tool and use
+  `"grid": "file"`.
+- **Each element** a closed contour that does not cross itself or another
+  element. Sharp or blunt trailing edges (a blunt base of any thickness),
+  smooth or stepped coves, a cusp on the slat: all taken.
+- **Gaps** wide enough for the near-wall layers: each layer is at least
+  1.5 `wall_spacing` x `layer_cells` thick and at most 0.3 of the distance
+  to the nearest other element, so a gap needs at least 5 `wall_spacing` x
+  `layer_cells` (0.24 % of the chord at the defaults, 1.5e-5 and 32).
+- **Units**: coordinates in the length the Reynolds number is per, the
+  section between 0.1 and 10 of it along x; otherwise set
+  `coordinate_scale`.
+- **Settings** measured to build (round the 30P30N's, below): flap deflection
+  20 to 40 deg, gap 0.5 to 3 % of the chord, overlap -1 to +0.14 % (+2 %
+  with a 3 % gap); slat deflection 20 to 30 deg, gap 1.5 to 4 %.
+
+Outside these the grid is refused with the reason (below), never built
+folded.
+
+### The coordinate files
+
+Either **one file per element** (`elements[k].file`), in any format
+`airfoil` takes:
+
+```
+30P30N flap element          <- an optional name line
+1.1278162  -0.1459988        <- x y, one point per line, round the contour
+1.1253447  -0.1449002
+...
+```
+
+Selig (round the contour, starting at a trailing-edge point), Lednicer (the
+two point counts, then the upper and the lower surface from the leading
+edge) or a plain two-column table, in either direction. A blunt trailing
+edge is left open: the file runs from one end of the base round to the
+other, and the base is the straight line between them.
+
+Or **one curve file** for all elements (`domain.file`, `elements` then
+roles only):
+
+```
+33                           <- a curve: its point count,
+15.730081  0.551473  0.0     <- then its points, x y (a third column is ignored)
+...
+9                            <- the next curve
+...
+```
+
+Curves join end to end, in any order and direction, into closed contours,
+one per element; the elements are taken front to back by their leading
+edges. A blunt base is its own curve (or part of one); it is found as the
+straight piece between the two sharpest corners at the trailing edge.
+
+In both, the elements are **as deployed**, in one frame, `x` downstream and
+`y` up. Corners (points where the contour turns more than 30 deg: a cove
+step, a cusp, a base's corners) are kept as nodes, the surface is splined
+between them, so give the corners as points of the file. A slat or flap may
+be re-placed instead of re-drawn (`deflection_deg`, `gap`, `overlap` below).
+
+### Case keys
 
 ```json
 "domain": {
@@ -140,21 +208,24 @@ file.
 }
 ```
 
-- **Elements** are listed front to back: `slat`, `main`, `flap` (the families
-  `main_flap`, `slat_main`, `slat_main_flap`). Each comes from a coordinate
-  file, as deployed, or all from one curve file in `domain.file` (per curve a
-  point count, then its points; the curves join into closed contours).
 - **Re-placing** a slat or flap: `deflection_deg` rotates it further deployed
-  from its given position (flap trailing edge down, slat leading edge down),
-  then `gap` (from the upstream trailing edge to the downstream element) and
-  `overlap` (along the main element's chord, positive when they overlap) set
-  its position; leave either out to keep it.
+  from its given position (flap trailing edge down about its leading edge,
+  slat leading edge down about its trailing edge), then `gap` (from the
+  upstream trailing edge to the downstream element) and `overlap` (along the
+  main element's chord, positive when they overlap) set its position; leave
+  either out to keep it. The main element stays where it is.
 - **Resolution**: `cells_per_chord` on the walls (clustered at edges and
   corners), `wall_spacing` for the first cell (1.5e-5 chords is y+ ~ 1 at
-  Re 1.71e6), `layer_cells` and `layer_thickness` for each element's near-wall
-  layer (thinner in gaps and coves), `gap_cells` across a gap at least.
-  Every block's cell counts are multiples of `even_cells` (4: two grid
-  sequencing levels).
+  Re 1.71e6), `layer_cells` and `layer_thickness` for each element's
+  near-wall layer (thinner in gaps and coves), `gap_cells` across a gap at
+  least. Every block's cell counts are multiples of `even_cells` (4: two
+  grid-sequencing levels). Every key: [the case reference](case_reference.md).
+
+Start high-lift cases from freestream (`grid_sequencing` 0): coarsened 30P30N
+grids settle on a separated flow (CL 1.5-1.6, CD 0.3-0.4) that the fine grid
+then takes thousands of iterations to wash out.
+
+### What is built
 
 ![generated 30P30N grid](figures/grid_generated_30p30n.png)
 
@@ -165,30 +236,40 @@ side the gap), a cove block in each cove, and blocks under the elements,
 split at each cove lip; a ring carries the grid to `far_field`.
 `python scripts/plot_blocks.py CASE --window x0 x1 y0 y1` draws the blocks.
 
-On the 30P30N at 150 cells per chord (113k cells): no folded cell; first cell
-within 1 % of `wall_spacing` and walls orthogonal to 0.05 deg away from
-trailing-edge and corner fans; cells as skewed as 13 deg where the main
-element's cove narrows into the flap gap; neighbouring cells across block
-interfaces within 1.4x of each other (median), up to 23x at the main
-element's cove corner. The grid builds in about a minute on a CPU.
+### When the grid is refused
 
-**Runs.** `main_flap_sa` (113k cells, from freestream) settles at 0, 5.5 and
-9.5 deg in 3760, 3560 and 6940 iterations (3.4 to 3.8 orders), CL 2.135,
-2.803, 3.041; 116 ms an iteration on a V100. Start high-lift cases from
-freestream: coarsened 30P30N grids settle on a separated flow (CL 1.5-1.6,
-CD 0.3-0.4) that the fine grid then takes thousands of iterations to wash
-out. The generated 30P30N at 5.5 deg: CL 2.535, 2.808, 2.846 on 75k, 113k
-and 165k cells (this code on JAXA's grids: 2.787 on 64k, 2.8756 on 261k).
+| message | meaning |
+|---|---|
+| *no multi-element template for elements [...]* | roles not in one of the three orders, front to back |
+| *the section spans ... along x* | coordinates in another unit: set `coordinate_scale` |
+| *... near-wall layer would be ... thick ...: too thin* | a gap narrower than the layers need: lower `wall_spacing` x `layer_cells`, or open the gap |
+| *... outside the template's envelope: its landmarks lie in the order ...* | the elements are not arranged as the template expects (an element not behind the one before it, a cove where none can be) |
+| *placing the flap: a gap of ... is out of reach at an overlap of ...* | the asked gap and overlap cannot both hold; the message gives the smallest gap there |
+| *block 'cove2' folds* | a setting past the envelope (a flap overlapping by 2 % of the chord or more under a narrow gap) |
 
-Beyond the 30P30N, `tests/verification/test_highlift_shapes.py` builds
-NACA-based sections with sharp and blunt trailing edges, a stepped and a
-smooth cove, and a slat ahead of a plain main element.
+### Quality and runs
 
-**Settings it takes** (`validation/highlift_envelope.py`, 43 settings round
-the 30P30N's, deflections from the given 30 deg): flap deflection 20 to 40
-deg, gap 0.5 to 3 %c, overlap -1 to +0.14 %c (+2 %c with a 3 %c gap); slat
-deflection 20 to 30 deg, gap 1.5 to 4 %c (under 2.4 %c with the overlap
-brought to -1 %c: at its given -2.4 %c the slat cannot come nearer). Outside
-it the grid is refused, never built folded: a flap overlapping by 2 %c folds
-the cove block, and a gap out of reach at the asked overlap is refused with
-the smallest gap there.
+On the 30P30N at 150 cells per chord (113k cells): no folded cell; the first
+cell within 1 % of `wall_spacing` and the walls orthogonal to 0.05 deg away
+from the trailing-edge and corner fans; cells as skewed as 13 deg where the
+main element's cove narrows into the flap gap; neighbouring cells across
+block interfaces within 1.4x of each other (median), up to 23x at the main
+element's cove corner. NACA-based sections (sharp and blunt trailing edges,
+a stepped and a smooth cove, a slat ahead of a plain main element:
+`tests/verification/test_highlift_shapes.py`) build with no cell skewed
+under 21 deg.
+
+`main_flap_sa` (113k cells) settles at 0, 5.5 and 9.5 deg in 3760, 3560 and
+6940 iterations (3.4 to 3.8 orders), CL 2.135, 2.803, 3.041, 116 ms an
+iteration on a V100. The generated 30P30N at 5.5 deg: CL 2.535, 2.808,
+2.846 on 75k, 113k and 165k cells, its Cp on JAXA's RANS on all three
+elements (`validation/compare_30p30n.py`); this code on JAXA's grids: 2.787
+on 64k cells, 2.8756 on 261k.
+
+The settings round the 30P30N's (`validation/highlift_envelope.py`): every
+flap deflection from 20 to 40 deg with gaps 0.5 to 3 % and overlaps -1 to
++0.14 % builds (but a 0.5 % gap, out of reach at -1 % overlap), and +2 %
+with a 3 % gap; a 2 % overlap under a narrower gap folds the cove block and
+is refused. Every slat deflection from 20 to 30 deg
+with gaps 1.5 to 4 % builds (under 2.4 % the overlap must come to -1 %: at
+its given -2.4 % the slat cannot come nearer).

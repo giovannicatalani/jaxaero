@@ -4,7 +4,8 @@ Per mesh, over all blocks: cell areas (a folded cell is an error), the
 smallest angle between a cell's ``i`` and ``j`` directions, the largest
 growth ratio between neighbouring cells along each index, the aspect ratio,
 the wall's first-cell heights and its orthogonality, and how far the outer
-boundary lies from the walls.
+boundary lies from the walls; separately, the growth across block
+interfaces (``interface_growth``).
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from .block import cell_widths
+from .block import Interface, cell_widths
 from .mesh import Mesh, as_mesh, side_nodes, wall_faces
 
 WARN_MIN_ANGLE = 20.0
@@ -106,6 +107,25 @@ def quality(mesh: Mesh) -> Quality:
     return Quality(sum(b.ni * b.nj for b in mesh), float(min(areas)), float(min(angles)),
                    float(max(growth)), float(max(aspect)), (float(heights.min()), float(heights.max())),
                    float(max(wall_angles)), far)
+
+
+def interface_growth(mesh: Mesh) -> np.ndarray:
+    """Across every interface face of a 2D multi-block mesh (each pair once),
+    the larger of the two cells' widths across it over the smaller: how
+    abruptly the grid changes from one block to the next."""
+    mesh = as_mesh(mesh)
+    widths = [cell_widths(np.asarray(g.x_node), np.asarray(g.y_node)) for g in mesh]
+    across = {"j_min": lambda w: w[1][:, 0], "j_max": lambda w: w[1][:, -1],
+              "i_min": lambda w: w[0][0, :], "i_max": lambda w: w[0][-1, :]}
+    out = [np.ones(0)]
+    for b, g in enumerate(mesh):
+        for side, read in across.items():
+            for seg in g.sides.side(side):
+                if isinstance(seg, Interface) and (seg.block, seg.side, seg.partner_start) > (b, side, seg.start):
+                    mine = read(widths[b])[seg.start:seg.stop]
+                    theirs = across[seg.side](widths[seg.block])[seg.partner_cells()]
+                    out.append(np.maximum(mine / theirs, theirs / mine))
+    return np.concatenate(out)
 
 
 def _mean_edges(nodes: np.ndarray) -> list[np.ndarray]:

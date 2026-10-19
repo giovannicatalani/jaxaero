@@ -170,3 +170,15 @@ def test_a_gap_out_of_reach_names_the_smallest_there(thirty_p) -> None:
     with pytest.raises(ValueError, match=r"out of reach at an overlap of -0.024.*at least 0.024"):
         place(slat, main, 0.0, 0.015, None)        # the slat's trailing edge 2.4 %c ahead of the nose
     assert gap(place(slat, main, 0.0, 0.015, -0.01), main) == pytest.approx(0.015, abs=1e-10)
+
+
+def test_an_element_file_may_start_anywhere_round_the_contour(tmp_path, thirty_p) -> None:
+    flap = thirty_p[2].airfoil
+    k = flap.leading_edge                                  # start at the nose, close the loop
+    x, y = np.roll(flap.x, -k), np.roll(flap.y, -k)
+    path = tmp_path / "flap.dat"
+    path.write_text("\n".join(f"{u:.15f} {v:.15f}" for u, v in zip(np.append(x, x[0]), np.append(y, y[0]))))
+    got = read_element(path, "flap").airfoil
+    assert got.chord == pytest.approx(flap.chord, rel=1e-12)
+    assert got.trailing_edge_gap == pytest.approx(flap.trailing_edge_gap, rel=1e-12)
+    assert got.y[1] < got.y[-2]                            # clockwise from the trailing edge

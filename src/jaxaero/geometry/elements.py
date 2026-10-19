@@ -18,10 +18,11 @@ edge ahead of the downstream element's leading edge is positive), by Newton's
 method on the two equations.
 
 Landmarks, on the contour as given: the leading edge (``Airfoil``'s: the
-point farthest from the trailing-edge midpoint), and the cove lip of a slat
-or a main element, the sharpest convex corner of its lower surface within a
-window of its chord set by its role (the slat's cusp, the main element's
-step ahead of the flap cove).
+point farthest from the trailing-edge midpoint); the corners (points turning
+more than ``CORNER_DEG``: the surface is splined piecewise between them, so
+they stay sharp); the cove lip of a slat or a main element, the sharpest
+convex corner of its lower surface within a window of its chord set by its
+role (the slat's cusp, the main element's step ahead of the flap cove).
 """
 
 from __future__ import annotations
@@ -30,7 +31,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-
 from scipy.interpolate import CubicSpline
 
 from .airfoil import Airfoil, from_points, read_airfoil
@@ -136,7 +136,7 @@ def join_contours(curves: list[np.ndarray], tol: float = 1e-6) -> list[np.ndarra
     return loops
 
 
-def _turning(p: np.ndarray, closed: bool) -> np.ndarray:
+def turning(p: np.ndarray, closed: bool) -> np.ndarray:
     """Signed turning angle at each point, radians (left turns positive)."""
     e = np.roll(p, -1, axis=0) - p if closed else np.diff(p, axis=0)
     a, b = (np.roll(e, 1, axis=0), e) if closed else (e[:-1], e[1:])
@@ -151,7 +151,7 @@ def open_at_trailing_edge(points: np.ndarray, name: str) -> Airfoil:
     d = np.hypot(points[:, None, 0] - points[None, :, 0], points[:, None, 1] - points[None, :, 1])
     i, j = np.unravel_index(np.argmax(d), d.shape)
     chord = d[i, j]
-    turn = np.abs(_turning(points, closed=True))
+    turn = np.abs(turning(points, closed=True))
     # The trailing edge is the end of the diameter with the sharper corners near it.
     best = None
     for end in (i, j):
@@ -191,9 +191,14 @@ def read_elements(path: str | Path, roles: list[str], scale: float = 1.0) -> lis
 
 
 def read_element(path: str | Path, role: str, scale: float = 1.0) -> Element:
-    """One element from a coordinate file (``read_airfoil``'s formats), as placed in it."""
+    """One element from a coordinate file (``read_airfoil``'s formats), as
+    placed in it: its points taken as a closed contour (a repeated first point
+    dropped) and opened at the trailing edge, so the file may start anywhere."""
     a = read_airfoil(path)
-    return Element(Airfoil(a.name, scale * a.x, scale * a.y), role)
+    p = np.stack([a.x, a.y], axis=1)
+    if np.hypot(*(p[-1] - p[0])) <= 1e-9 * np.ptp(p, axis=0).max():
+        p = p[:-1]
+    return Element(open_at_trailing_edge(scale * p, a.name), role)
 
 
 # --- Landmarks ------------------------------------------------------------------------------
@@ -202,7 +207,7 @@ def read_element(path: str | Path, role: str, scale: float = 1.0) -> Element:
 def corners(element: Element) -> np.ndarray:
     """Indices of the contour's corners (its two ends excluded): the points turning at least ``CORNER_DEG``."""
     a = element.airfoil
-    turn = np.abs(_turning(np.stack([a.x, a.y], axis=1), closed=False))
+    turn = np.abs(turning(np.stack([a.x, a.y], axis=1), closed=False))
     return np.flatnonzero(turn >= np.radians(CORNER_DEG))
 
 
@@ -231,6 +236,14 @@ def surface(element: Element):
     return at
 
 
+def fan_points(element: Element) -> np.ndarray:
+    """Where a near-wall layer fans round the element ``(m, 2)``: its
+    trailing-edge midpoint and its convex corners turning more than 60 deg."""
+    a = element.airfoil
+    turn = turning(np.stack([a.x, a.y], axis=1), closed=False)
+    convex = np.flatnonzero(turn < -np.radians(60.0))
+    return np.concatenate([element.trailing_edge[None], np.stack([a.x[convex], a.y[convex]], axis=1)])
+
 
 def chord_fraction(element: Element, points: np.ndarray) -> np.ndarray:
     """Distance of ``points`` ``(n, 2)`` along the element's chord from its leading edge, in chords."""
@@ -242,7 +255,8 @@ def cove_lip(element: Element, window_chords: float = 0.005) -> int | None:
     """Index of the cove lip: the lower-surface point turning most sharply
     convex (to the right, walking clockwise), the turning summed over
     ``window_chords`` of arc either side, within the role's ``LIP_WINDOW``,
-    then the sharpest single point in that window; ``None`` for a flap, or if no corner turns ``LIP_MIN_TURN_DEG``."""
+    then the sharpest single point in that window; ``None`` for a flap, or if
+    no corner turns ``LIP_MIN_TURN_DEG``."""
     if element.role not in LIP_WINDOW:
         return None
     a = element.airfoil
@@ -266,7 +280,7 @@ def cove_lip(element: Element, window_chords: float = 0.005) -> int | None:
     # the corner itself: the sharpest single point within the window
     near = candidates[(np.abs(a.s[candidates] - a.s[candidates[k]]) <= w)
                       | (np.abs(candidates - candidates[k]) <= 1)]
-    return int(near[np.argmin(_turning(p, closed=False)[near])])
+    return int(near[np.argmin(turning(p, closed=False)[near])])
 
 
 # --- Placement ------------------------------------------------------------------------------
@@ -318,11 +332,12 @@ def place(element: Element, main: Element, deflection_deg: float = 0.0, gap_: fl
     """``element`` (a slat or flap) re-set against ``main``: rotated by
     ``deflection_deg`` (``deflection``), then translated so that its gap and
     overlap with the main element take the given values (one left ``None``
-    keeps its value after the rotation). A flap is downstream of the main element, a slat upstream.
+    keeps its value after the rotation). A flap is downstream of the main
+    element, a slat upstream.
 
     Raises:
-        ValueError: if Newton's method does not converge (a gap the geometry
-        cannot take at that overlap).
+        ValueError: if the gap is out of reach at that overlap (the message
+        gives the smallest gap there).
     """
     moved = deflection(element, deflection_deg) if deflection_deg else element
     if gap_ is None and overlap_ is None:

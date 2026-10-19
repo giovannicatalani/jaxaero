@@ -19,9 +19,11 @@ geometry, see [your own airfoil](own-airfoil.md),
 | `rae2822_transonic_sa` | transonic SA RANS, M 0.729, 2.31 deg, Re 6.5e6 | NASA NPARC C-grid from file |
 | `flatplate_sa` | SA RANS boundary layer, M 0.2, Re 5e6 | NASA TMR flat-plate grid |
 | `30p30n_sa` | three-element high lift, M 0.17, 5.5 deg, Re 1.71e6 | JAXA 117-block grid from file |
+| `main_flap_sa` | two-element high lift (30P30N main and flap), M 0.17, 5.5 deg, Re 1.71e6 | generated multi-element grid |
 
 The grids read from files are not in the repository; `data/grids/README.md`
-says where to download each. The first three examples need nothing else.
+says where to download each. The first three examples and `main_flap_sa`
+need nothing else.
 
 ## Running
 

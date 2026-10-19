@@ -126,9 +126,8 @@ def march(line: np.ndarray, steps: np.ndarray, periodic: bool, outflow: np.ndarr
           smoothing: float | np.ndarray = 3.0) -> np.ndarray:
     """Layers marched from ``line`` ``(n, 2)``, one per step of ``steps``
     (``(nj,)`` distances, or ``(n, nj)``: each node its own), ``(n, nj + 1, 2)``;
-    ``smoothing`` a number, or per node ``(n,)`` or per node and step ``(n, nj)``.
-    ``periodic``: a closed line
-    (an O-grid, its last node not repeated). Otherwise the two end nodes stay
+    ``smoothing`` a number, or per node ``(n,)``, or per node and step
+    ``(n, nj)``. ``periodic``: a closed line (an O-grid, its last node not repeated). Otherwise the two end nodes stay
     on the lines through them along ``outflow`` (the wake direction), level
     with their neighbours."""
     n, nj = len(line), np.shape(steps)[-1]
@@ -228,7 +227,7 @@ def o_grid(airfoil: Airfoil, cells_airfoil: int, cells_normal: int, wall_spacing
         x, y = x[:-1], y[:-1]
     line = np.stack([x, y], axis=1)
     layers = march_to(line, line, cells_normal, wall_spacing * c, far_field * c,
-                       periodic=True, smoothing=smoothing)
+                      periodic=True, smoothing=smoothing)
     layers = np.concatenate([layers, layers[:1]], axis=0)
     return layers[..., 0], layers[..., 1]
 
@@ -250,5 +249,5 @@ def c_grid(airfoil: Airfoil, cells_airfoil: int, cells_wake: int, cells_normal: 
     line_y = np.concatenate([wy[::-1], y[1:-1], wy])
     line = np.stack([line_x, line_y], axis=1)
     layers = march_to(line, np.stack([x, y], axis=1), cells_normal, wall_spacing * c, far_field * c,
-                       periodic=False, outflow=direction, smoothing=smoothing)
+                      periodic=False, outflow=direction, smoothing=smoothing)
     return layers[..., 0], layers[..., 1]

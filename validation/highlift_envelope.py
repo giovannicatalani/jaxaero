@@ -28,12 +28,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from jaxaero.geometry.elements import _turning, corners, gap, overlap, place, read_elements  # noqa: E402
+from jaxaero.geometry.elements import fan_points, gap, overlap, place, read_elements  # noqa: E402
 from jaxaero.mesh.assemble import assemble  # noqa: E402
-from jaxaero.mesh.block import Interface, cell_widths  # noqa: E402
 from jaxaero.mesh.highlift import Settings, multi_element  # noqa: E402
-from jaxaero.mesh.mesh import assign_conditions, patches  # noqa: E402
-from jaxaero.mesh.quality import _cell_angles, quality  # noqa: E402
+from jaxaero.mesh.quality import _cell_angles, interface_growth, quality  # noqa: E402
 
 CRV = ROOT / "validation/references/jaxa_30p30n/2010_30p30n_thik_te.crv"
 GIVEN = {"flap": (0.0, 0.0127, 0.0014), "slat": (0.0, 0.0295, None)}
@@ -52,20 +50,6 @@ def sample() -> list[dict]:
     return out
 
 
-def _fans(elements, thickness):
-    out = []
-    for e in elements:
-        a = e.airfoil
-        out.append((e.trailing_edge, thickness))
-        turn = _turning(np.stack([a.x, a.y], 1), closed=False)
-        out += [(np.array([a.x[c], a.y[c]]), thickness) for c in corners(e) if turn[c] < -np.radians(60.0)]
-    return out
-
-
-def _outside(points, fans):
-    return ~np.any([np.hypot(*(points - c).T) < r for c, r in fans], axis=0)
-
-
 def measure(elements, settings: Settings) -> dict:
     """Build and measure one grid (or the refusal)."""
     start = time.time()
@@ -74,31 +58,19 @@ def measure(elements, settings: Settings) -> dict:
         mesh, info = assemble(raw)
     except ValueError as error:
         return {"built": False, "why": str(error), "seconds": time.time() - start}
-    mesh = assign_conditions(mesh, {p: "no_slip_wall" if p == "wall" else "far_field" for p in patches(mesh)})
-    fans = _fans(elements, settings.layer_thickness)
+    fans = np.concatenate([fan_points(e) for e in elements])
     worst_angle = 90.0
     for g in mesh:
         x, y = np.asarray(g.x_node), np.asarray(g.y_node)
         c = np.stack([0.25 * (x[1:, 1:] + x[:-1, 1:] + x[1:, :-1] + x[:-1, :-1]).ravel(),
                       0.25 * (y[1:, 1:] + y[:-1, 1:] + y[1:, :-1] + y[:-1, :-1]).ravel()], 1)
-        far = _outside(c, [(p, r + 0.02) for p, r in fans]).reshape(g.ni, g.nj)
+        d = np.hypot(c[:, None, 0] - fans[None, :, 0], c[:, None, 1] - fans[None, :, 1]).min(axis=1)
+        far = (d > settings.layer_thickness + 0.02).reshape(g.ni, g.nj)
         if far.any():
             worst_angle = min(worst_angle, float(_cell_angles(x, y)[far].min()))
-    widths = [cell_widths(np.asarray(g.x_node), np.asarray(g.y_node)) for g in mesh]
-    across = {"j_min": lambda w: w[1][:, 0], "j_max": lambda w: w[1][:, -1],
-              "i_min": lambda w: w[0][0, :], "i_max": lambda w: w[0][-1, :]}
-    medians, peak = [], 1.0
-    for b, g in enumerate(mesh):
-        for side in across:
-            for seg in g.sides.side(side):
-                if isinstance(seg, Interface) and seg.block != b:
-                    mine = across[side](widths[b])[seg.start:seg.stop]
-                    theirs = across[seg.side](widths[seg.block])[seg.partner_cells()]
-                    r = np.maximum(mine / theirs, theirs / mine)
-                    medians.append(np.median(r))
-                    peak = max(peak, float(r.max()))
+    growth = interface_growth(mesh)
     return {"built": True, "cells": record["cells"], "bodies": info.bodies, "folded": quality(mesh).folded,
-            "min_angle": worst_angle, "growth_peak": peak, "growth_median": float(np.median(medians)),
+            "min_angle": worst_angle, "growth_peak": float(growth.max()), "growth_median": float(np.median(growth)),
             "seconds": time.time() - start}
 
 

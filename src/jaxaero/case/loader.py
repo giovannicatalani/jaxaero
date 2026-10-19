@@ -14,13 +14,13 @@ from typing import Any
 
 from ..core import constants
 from ..core.config import FlowConditions, ImplicitConfig, NumericsConfig
+from ..geometry.elements import ROLES
 from ..mesh.atlas import Atlas, build_atlas
 from ..mesh.coarsen import coarsen as coarsen_mesh
+from ..mesh.highlift import family
 from ..mesh.mesh import assign_conditions, patches
 from ..mesh.quality import quality
 from . import schema
-from ..geometry.elements import ROLES
-from ..mesh.highlift import family
 from .domain import ELEMENT_KEYS, PATCH_RULE_KEYS, GridSpec
 
 CASE_FILE, NUMERICAL_FILE = "case.json", "numerical.json"
@@ -130,28 +130,32 @@ def _grid_spec(case_doc: dict) -> GridSpec:
             raise CaseError(f"'domain.patches[{k}]' needs a 'name' and takes {sorted(PATCH_RULE_KEYS)}; "
                             f"got {sorted(rule)}")
     elements = domain["elements"]
+    _check_elements(elements, kind, domain["file"])
+    return GridSpec(**{**{k: v for k, v in domain.items() if v is not None}, "patches": tuple(rules),
+                       "elements": tuple(elements)})
+
+
+def _check_elements(elements: list, kind: str, file: str | None) -> None:
+    """``domain.elements``: each an object with a role and only the element
+    keys, its placement numbers numbers, the main element not re-placed, a
+    file for each unless ``domain.file`` holds them all; roles in a family's order."""
     for k, element in enumerate(elements):
         if not isinstance(element, dict) or element.get("role") not in ROLES or set(element) - ELEMENT_KEYS:
             raise CaseError(f"'domain.elements[{k}]' needs a 'role' (one of {list(ROLES)}) and takes "
                             f"{sorted(ELEMENT_KEYS)}; got {element!r}")
-        for key in ("deflection_deg", "gap", "overlap"):
-            if key in element and (not isinstance(element[key], (int, float)) or isinstance(element[key], bool)):
+        placing = [key for key in ("deflection_deg", "gap", "overlap") if key in element]
+        for key in placing:
+            if not isinstance(element[key], (int, float)) or isinstance(element[key], bool):
                 raise CaseError(f"'domain.elements[{k}].{key}' must be a number, got {element[key]!r}")
-        if _moved(element) and element["role"] == "main":
+        if placing and element["role"] == "main":
             raise CaseError(f"'domain.elements[{k}]': the main element is not re-placed; place the others")
-        if kind == "multi_element" and "file" not in element and domain["file"] is None:
+        if kind == "multi_element" and "file" not in element and file is None:
             raise CaseError(f"'domain.elements[{k}]' needs a 'file', or 'domain.file' must hold every element")
     if kind == "multi_element":
         try:
             family([e["role"] for e in elements])
         except ValueError as error:
             raise CaseError(f"'domain.elements': {error}") from None
-    return GridSpec(**{**{k: v for k, v in domain.items() if v is not None}, "patches": tuple(rules),
-                       "elements": tuple(elements)})
-
-
-def _moved(element: dict) -> bool:
-    return any(k in element for k in ("deflection_deg", "gap", "overlap"))
 
 
 def _flow(case_doc: dict) -> FlowConditions:

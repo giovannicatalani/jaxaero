@@ -21,13 +21,12 @@ import pytest
 
 from jaxaero import CaseError, load_case
 from jaxaero.case import parse_case
-from jaxaero.geometry.elements import _turning, corners, gap, overlap, place, read_elements
+from jaxaero.geometry.elements import corners, fan_points, gap, overlap, place, read_elements
 from jaxaero.mesh.assemble import assemble
-from jaxaero.mesh.block import Interface, cell_widths
 from jaxaero.mesh.coarsen import coarsen
 from jaxaero.mesh.highlift import Settings, family, multi_element
 from jaxaero.mesh.mesh import assign_conditions, patches
-from jaxaero.mesh.quality import _cell_angles, quality
+from jaxaero.mesh.quality import _cell_angles, interface_growth, quality
 
 CRV = Path(__file__).resolve().parents[2] / "validation/references/jaxa_30p30n/2010_30p30n_thik_te.crv"
 PICK = {"main_flap": [1, 2], "slat_main": [0, 1], "slat_main_flap": [0, 1, 2]}
@@ -48,20 +47,12 @@ def built(request, thirty_p):
     return request.param, elements, raw, record, walled, info
 
 
-def _fans(elements):
-    """Trailing edges and convex corners, each with the radius of its fan (a layer's thickness)."""
-    out = []
-    for e in elements:
-        a = e.airfoil
-        out.append((e.trailing_edge, SETTINGS.layer_thickness))
-        turn = _turning(np.stack([a.x, a.y], 1), closed=False)
-        out += [(np.array([a.x[c], a.y[c]]), SETTINGS.layer_thickness) for c in corners(e)
-                if turn[c] < -np.radians(60.0)]
-    return out
-
-
-def _outside(points, fans):
-    return ~np.any([np.hypot(*(points - c).T) < r for c, r in fans], axis=0)
+def _outside_fans(points, elements, margin: float = 0.0) -> np.ndarray:
+    """Points farther than a layer's thickness (plus ``margin``) from every
+    trailing edge and convex corner, where the layers fan."""
+    fans = np.concatenate([fan_points(e) for e in elements])
+    d = np.hypot(points[:, None, 0] - fans[None, :, 0], points[:, None, 1] - fans[None, :, 1])
+    return d.min(axis=1) > SETTINGS.layer_thickness + margin
 
 
 def test_each_family_has_its_bodies_two_patches_and_coincident_interfaces(built) -> None:
@@ -90,13 +81,12 @@ def test_it_coarsens_twice(built) -> None:
 
 def test_the_first_cell_and_its_orthogonality_outside_the_fans(built) -> None:
     _, elements, _, _, mesh, _ = built
-    fans = _fans(elements)
     for g in mesh:
         x, y = np.asarray(g.x_node), np.asarray(g.y_node)
         for side, seg in g.sides.walls():
             sl = slice(seg.start, seg.stop + 1)
             wall, inner = np.stack([x[sl, 0], y[sl, 0]], 1), np.stack([x[sl, 1], y[sl, 1]], 1)
-            keep = _outside(wall, fans)
+            keep = _outside_fans(wall, elements)
             keep[[0, -1]] = False
             # concave corners: their node steps along the bisector, a wall cell from both walls
             for e in elements:
@@ -111,30 +101,17 @@ def test_the_first_cell_and_its_orthogonality_outside_the_fans(built) -> None:
 
 def test_angles_and_interface_growth_hold_their_measured_state(built) -> None:
     _, elements, _, _, mesh, _ = built
-    fans = _fans(elements)
     worst = 90.0
     for g in mesh:
         x, y = np.asarray(g.x_node), np.asarray(g.y_node)
         centres = np.stack([0.25 * (x[1:, 1:] + x[:-1, 1:] + x[1:, :-1] + x[:-1, :-1]).ravel(),
                             0.25 * (y[1:, 1:] + y[:-1, 1:] + y[1:, :-1] + y[:-1, :-1]).ravel()], 1)
-        far = _outside(centres, [(c, r + 0.02) for c, r in fans]).reshape(g.ni, g.nj)
+        far = _outside_fans(centres, elements, margin=0.02).reshape(g.ni, g.nj)
         if far.any():
             worst = min(worst, float(_cell_angles(x, y)[far].min()))
     assert worst >= 12.0                       # target 20 deg (missed at the cove and gap corners)
-    medians, peak = [], 1.0
-    widths = [cell_widths(np.asarray(g.x_node), np.asarray(g.y_node)) for g in mesh]
-    across = {"j_min": lambda w: w[1][:, 0], "j_max": lambda w: w[1][:, -1],
-              "i_min": lambda w: w[0][0, :], "i_max": lambda w: w[0][-1, :]}
-    for b, g in enumerate(mesh):
-        for side in across:
-            for seg in g.sides.side(side):
-                if isinstance(seg, Interface) and seg.block != b:
-                    mine = across[side](widths[b])[seg.start:seg.stop]
-                    theirs = across[seg.side](widths[seg.block])[seg.partner_cells()]
-                    r = np.maximum(mine / theirs, theirs / mine)
-                    medians.append(np.median(r))
-                    peak = max(peak, float(r.max()))
-    assert np.median(medians) <= 1.5 and peak <= 35.0        # target 1.3 everywhere
+    growth = interface_growth(mesh)
+    assert np.median(growth) <= 1.5 and growth.max() <= 35.0        # target 1.3 everywhere
 
 
 def test_unknown_role_orders_are_refused() -> None:
@@ -148,6 +125,12 @@ def test_a_gap_too_narrow_for_the_layers_is_refused(thirty_p) -> None:
     tight = place(flap, main, 0.0, 1e-4, 0.0)               # the flap all but touching the main element
     with pytest.raises(ValueError, match="too thin"):
         multi_element([main, tight], SETTINGS)
+
+
+def test_a_section_in_another_unit_is_refused(thirty_p) -> None:
+    inches = [e.moved(shift=(0.0, 0.0)) for e in read_elements(CRV, ["slat", "main", "flap"])]   # 18 in chord
+    with pytest.raises(ValueError, match="coordinate_scale"):
+        multi_element(inches[1:], SETTINGS)
 
 
 def test_re_placed_flaps_build(thirty_p) -> None:

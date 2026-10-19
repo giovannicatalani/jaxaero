@@ -7,7 +7,7 @@ on CPU or GPU.
 
 It is conceived as a research code on differentiable, GPU based solvers written in Python. It has been developed with the use of Claude Code. It has been validated on several canonical cases, against existing solvers and experimental data ([validation/gallery](validation/gallery/README.md)). 
 
-In 2D, it supports automatic structured mesh generation around an airfoil from its coordinate file. Alternatively, an input mesh can be provided (Plot3D or CGNS, one block or many). Multi-element high lift sections can be simulated as well, provided that a multi-block structured mesh is provided as input.
+In 2D, it supports automatic structured mesh generation around an airfoil from its coordinate file. Alternatively, an input mesh can be provided (Plot3D or CGNS, one block or many). Multi-element high-lift sections (a slat, main element and flap) can be meshed automatically from their coordinates too, or read as a multi-block structured mesh.
 For a 3D wing, a one-block Plot3D grid
 ([docs/wing-3d.md](docs/wing-3d.md)) must be provided.
 

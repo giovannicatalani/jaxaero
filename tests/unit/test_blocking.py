@@ -15,7 +15,7 @@ from jaxaero.mesh.assemble import assemble
 from jaxaero.mesh.blocking import (Block, cell_areas, chain_nodes, distribute, fill, raw_blocks, smooth,
                                    solve_counts, tfi, unfolded, winslow)
 from jaxaero.mesh.generate import geometric
-from jaxaero.mesh.quality import _cell_angles, quality
+from jaxaero.mesh.quality import _cell_angles, interface_growth, quality
 
 
 def _arc(r, t0, t1, n):
@@ -165,6 +165,9 @@ def test_smoothing_keeps_the_sides_reduces_skew_and_assembles() -> None:
     assert set(info.patch_faces) == {"farfield"}      # one counter-clockwise outer loop
     q = quality(mesh)
     assert not q.folded and q.min_angle_deg > 45.0 and q.max_growth < 1.3
+    growth = interface_growth(mesh)
+    # each cut's 12 faces once; the cut up from the bump is stretched, the others uniform
+    assert growth.size == 4 * 12 and np.all(growth >= 1.0) and growth.max() < 1.5
 
 
 def test_spacing_control_gives_the_first_cells_asked_for() -> None:
