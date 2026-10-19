@@ -1,0 +1,1084 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Compressible Euler, Navier-Stokes and SA RANS on structured grids in JAX, 2D and 3D">
+      
+      
+      
+        <link rel="canonical" href="https://giovannicatalani.github.io/jaxaero/dev/notes/">
+      
+      
+        <link rel="prev" href="../../developer/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Design notes - JAX-Aero</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#design-notes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="JAX-Aero" class="md-header__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            JAX-Aero
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Design notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="JAX-Aero" class="md-nav__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    JAX-Aero
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running a case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../own-airfoil/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your own airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../multi-element/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-element airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../wing-3d/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A 3D wing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../case_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equations and method
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design notes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#solversimplicitpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solvers/implicit.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solversdriverpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solvers/driver.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coreconfigpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core/config.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numericsriemannpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numerics/riemann.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numericsreconstructionpy-numericslimiterspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numerics/reconstruction.py, numerics/limiters.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meshcoarsenpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh/coarsen.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corelinalgpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core/linalg.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solverskrylovpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solvers/krylov.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meshatlaspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh/atlas.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meshhighliftpy-meshblockingpy-multi-element-grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh/highlift.py, mesh/blocking.py (multi-element grids)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#solversimplicitpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solvers/implicit.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solversdriverpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solvers/driver.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coreconfigpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core/config.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numericsriemannpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numerics/riemann.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numericsreconstructionpy-numericslimiterspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        numerics/reconstruction.py, numerics/limiters.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meshcoarsenpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh/coarsen.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corelinalgpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core/linalg.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solverskrylovpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        solvers/krylov.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meshatlaspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh/atlas.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meshhighliftpy-meshblockingpy-multi-element-grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh/highlift.py, mesh/blocking.py (multi-element grids)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="design-notes">Design notes<a class="headerlink" href="#design-notes" title="Permanent link">&para;</a></h1>
+<p>Why some things are done the way they are, with the measurements behind
+each choice, grouped by module.</p>
+<h2 id="solversimplicitpy">solvers/implicit.py<a class="headerlink" href="#solversimplicitpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Defect correction is the default Jacobian.</strong> On 112x32 over 400 steps, a
+  limited second-order residual dropped 0.06 orders with the exact Jacobian
+  and 2.8 with the first-order one; an unlimited residual gave 4.9 orders
+  exact. The exact Jacobian of a limited scheme carries the limiter's kinks.</li>
+<li><strong>The CFL ramp keys off the linear solve, not the residual history.</strong> A
+  stagnated GMRES returns a null update, which leaves the residual unchanged
+  and looks like success to a residual-based test; a freestream start makes
+  the residual rise through the transient, which looks like failure to
+  textbook SER (Mulder and van Leer, J. Comput. Phys. 59 (1985)). One extra
+  matvec, about 1% of a step, measures the linear reduction instead.</li>
+<li><strong><code>max_relative_update</code>.</strong> Rejection alone only stops steps that leave the
+  physical domain. On TMR NACA 0012 at 15 deg, 449x129, accepted steps built
+  an odd-even checkerboard in nu~ and rho within 600 steps, after which every
+  step was rejected; bounding the relative change (0.2) cured it.</li>
+</ul>
+<h2 id="solversdriverpy">solvers/driver.py<a class="headerlink" href="#solversdriverpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Force-based stopping is the default</strong> (<code>convergence.forces_tol</code> 1e-4,
+  the gallery's settledness bar, applied to CL, CD and CM). On the M6 1.08M
+  level from freestream it stops at 2540 steps with the forces within 3e-6 of
+  the 3000-step values; 1e-5 did not stop within 3000 (the last-quarter
+  window still holds the early drift). RANS residuals stall at
+  round-off 10-11 orders down, and some cases at 2-3 (30P30N L1, NACA 0012
+  at 0 deg) with the forces settled to six digits long before. On RAE 2822
+  the run stops at 940 of 6000 steps with the 6000-step forces to every
+  printed digit; on the M6 135k level at 1600, the same forces to six digits
+  whatever the Krylov settings.</li>
+<li>
+<p><strong>A frozen run stops as <code>stalled</code>, never <code>settled</code>.</strong> When every step is
+  rejected the state does not move, so the forces are flat and would pass
+  the settledness test (a mis-started 1.08M M6 run stopped as settled after
+  260 steps that way). A block whose residual is bitwise constant is no
+  progress, whatever the equations.</p>
+</li>
+<li>
+<p><strong>Convergence is judged from the running peak.</strong> Started from uniform
+  freestream, the first residual is near zero (every cell away from the wall
+  is in equilibrium), so normalising by it reports a residual that appears
+  to grow through the transient.</p>
+</li>
+</ul>
+<h2 id="coreconfigpy">core/config.py<a class="headerlink" href="#coreconfigpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>float64 only.</strong> A float32 path existed and was removed. The 5.9x
+  double-precision penalty on a 4 GB laptop card is real,
+  but every verification gate must run in double: a suite that cannot tell a
+  bug from round-off is no use, and no result was ever quoted from
+  the single-precision path.</li>
+<li><strong>HLLC by default</strong>: it resolves a stationary contact exactly and needs no
+  entropy fix, so the scheme carries no tunable dissipation.</li>
+<li><strong>Krylov sizes.</strong> The Arnoldi loop (solvers/krylov.py) runs to full length
+  whether or not it has converged, testing only between restarts, so a large
+  subspace is paid in full every step: small subspace (10), two restarts.
+  Inexact Newton tolerance 1e-2 (Eisenstat and Walker, SIAM J. Sci. Comput.
+  17 (1996)).</li>
+<li><strong>CFL ramp defaults.</strong> Start at 10 (five times what the explicit path
+  tolerates); growth capped at 1.3 per step and earned by the residual
+  reduction; <code>cfl_max</code> is a backstop, not a tuning knob: the ramp settles at
+  whatever the preconditioner sustains, limited in practice by
+  <code>krylov_success</code>.</li>
+</ul>
+<h2 id="numericsriemannpy">numerics/riemann.py<a class="headerlink" href="#numericsriemannpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Why HLLC.</strong> Roe's scheme is shock-unstable on high-aspect-ratio cells, and
+  the TMR grids reach such ratios at the shock foot: on 448x128 at M 0.8 the
+  transonic shock never settled (CL oscillating 0.04-0.28), curable only by
+  an entropy-fix coefficient large enough to bias CL by 16%. HLLC takes its
+  dissipation from wave-speed estimates, has no vanishing eigenvalue, and
+  needs no fix. On the O-grid at M 0.8, alpha 1.25, 128 squared, the two agree
+  to three digits (CL 0.33567 vs 0.33585, CD 0.025711 vs 0.025698, observed
+  orders 0.94/1.37 vs 0.92/1.33), so Roe stays as the independent check, 15%
+  cheaper per iteration.</li>
+<li><strong>Contact resolution is required</strong>: a slip wall has <code>vn = 0</code> along its
+  length, so a flux that smears contacts smears exactly where CL and CD are
+  computed. A Rusanov entry was built and removed for that reason.</li>
+</ul>
+<h2 id="numericsreconstructionpy-numericslimiterspy">numerics/reconstruction.py, numerics/limiters.py<a class="headerlink" href="#numericsreconstructionpy-numericslimiterspy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Raw index differences, not spacing-weighted gradients.</strong> Limiting a
+  gradient over the real cell spacings is the formally correct second-order
+  form on a graded grid; it was built, measured and removed. On the strongly
+  graded TMR C-grids it lost badly (transonic CL 0.1854 against 0.2461,
+  oscillation 4.5x larger): the TVD region of a limiter depends on the spacing
+  ratio and these limiters ignore it. On the mildly graded conformal O-grids
+  it lost marginally, for no gain in order (CD 0.003103 against 0.002831 at
+  128 squared, observed order 1.16 against 1.13). The weighted variant is in
+  the git history.</li>
+<li><strong>Limiters take differences <code>(a, b)</code>, not ratios</strong>: no 0/0 on a flat field,
+  no guard epsilon. Every limiter must return exactly <code>a</code> at <code>a == b</code> (second
+  order in smooth flow); this is unit-tested.</li>
+<li><strong>minmod vs van Albada.</strong> On the explicit path on TMR's C-grids minmod held
+  a transonic shock where van Albada reached 2.29 orders against minmod's
+  4.39 (later confounded by those grids' own limit cycle). Van Albada came
+  back for RAE 2822: smooth where active, close to the central
+  slope in smooth flow. Van Leer is in the git history.</li>
+<li><strong>Venkatakrishnan is deliberately absent</strong>: it is a smooth Barth-Jespersen
+  for unstructured grids, not a slope-ratio limiter; fed <code>r = a/b</code> it returns
+  <code>phi(1) = 3/4</code>, quietly losing second order.</li>
+</ul>
+<h2 id="meshcoarsenpy">mesh/coarsen.py<a class="headerlink" href="#meshcoarsenpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Grid sequencing coarsens the case's own grid</strong> (every other node, the
+  segments' indices halved), so it needs no second grid file and works for
+  generated, file and multi-block grids alike. Injection (each child takes its
+  parent's value) is enough: from the settled 135k M6 level, the 1.08M level
+  had its forces within 1e-4 of the 3000-step values for good from step 620,
+  against 1760 from freestream. The canvas padding cells must keep the
+  freestream start (a zero density there fails every step's physicality test).</li>
+</ul>
+<h2 id="corelinalgpy">core/linalg.py<a class="headerlink" href="#corelinalgpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The line solve is block cyclic reduction</strong>, Thomas kept as the reference
+  in the tests. A Thomas sweep is <code>2L</code> dependent steps per application
+  (<code>L</code> the chain length), each a small kernel: on an A100 the preconditioner
+  was 89% of an RAE 2822 Newton step (121.7 against 13.6 ms with full-length
+  GMRES). Odd-even reduction is <code>ceil(log2 L)</code> levels for about twice the
+  flops: per apply 3.52 -&gt; 0.136 ms on RAE 2822 (flow chains of 128), 2.08 -&gt;
+  0.24 ms on M6 135k, and still faster at 1.08M cells (4.81 -&gt; 2.89 ms) once
+  the power-of-two padding was dropped (with it, 1.08M was no faster).
+  <code>lax.scan(unroll=8)</code> gave only 2-4x and was dropped.</li>
+</ul>
+<h2 id="solverskrylovpy">solvers/krylov.py<a class="headerlink" href="#solverskrylovpy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Right preconditioning.</strong> On TMR's 112x32 C-grid at CFL 1000, ten
+  left-preconditioned GMRES iterations returned a true residual 3.1x larger
+  than they started with; ten right-preconditioned ones 0.47x (0.18x with the
+  lines continued through the wake cut).</li>
+</ul>
+<h2 id="meshatlaspy">mesh/atlas.py<a class="headerlink" href="#meshatlaspy" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Line chains stop at other blocks.</strong> Continued through every interface,
+  30P30N L1 ran 2.1x slower per step (chains of 190 cells instead of 66) for
+  no convergence gain; only a block's own j-cut (the C-grid wake) is crossed.</li>
+</ul>
+<h2 id="meshhighliftpy-meshblockingpy-multi-element-grids">mesh/highlift.py, mesh/blocking.py (multi-element grids)<a class="headerlink" href="#meshhighliftpy-meshblockingpy-multi-element-grids" title="Permanent link">&para;</a></h2>
+<p>Measured on the 30P30N's elements at 150 wall cells per chord (75.9k cells
+main + flap, 113k all three), quality as <code>tests/unit/test_highlift.py</code>
+measures it.</p>
+<ul>
+<li><strong>One chain template, not three.</strong> An O-layer's outer contour is rounded at
+  every trailing edge (and the 30P30N's are blunt), so a cut leaving the nose
+  tip meets the contour tangentially: blocks cannot be split there. The
+  families are compositions per element pair: a slot block over the
+  downstream element (left side the gap cut and the upstream base, top the
+  upstream wake), a cove block (upstream lip to base, gap cut, downstream
+  nose, mouth), a drop from every lip. Fill blocks have <code>j</code> from a wall where
+  they touch one.</li>
+<li><strong>The gap is a side, never a chain member.</strong> With the gap cut in the
+  chain of one block over everything, 80 i-lines packed into the 0.005 gap
+  ran up to the middle loop and Winslow's <code>psi</code> lost authority there (cells
+  of 0.004-0.007 against 3e-4 wanted, 95x across the cut). As a side of both
+  the cove and the slot it is 5-6x at worst, median 3.</li>
+<li><strong>Wakes are offsets of the slot's floor.</strong> A Hermite wake from a slat's
+  trailing edge cannot follow the main element's surface; the floor (the
+  downstream contour and wake) offset node for node, by the gap growing 10 %
+  per unit length, does, and gives the slot straight near-normal lines. The
+  normals are smoothed over two offsets and the curve over one, then the
+  nodes put back at their arc fractions (averaging alone slid them: 12.7x
+  at the main element's base); unsmoothed, the flap's base creased the main
+  wake (17-24x across it).</li>
+<li><strong>Connectors fixed, each block smoothed alone.</strong> Smoothing all blocks at
+  once with the connectors' nodes free (stencils across blocks) let corners
+  collapse where three blocks meet (the slat cusp folded); anchoring the
+  cuts' ends folded where anchored met free. Fixed Hermite cuts with spacing
+  matched at their ends: no fold in any family.</li>
+<li><strong>Spacing control, iterated.</strong> Thomas-Middlecoff <code>psi</code> interpolated from a
+  block's sides ignores the layer it sits on (first cells 10-20x the layer's
+  last step mid-block). <code>psi</code> from the heights wanted off the bottom and top
+  (per j line, from its end nodes alone) fixed the medians; three
+  GRAPE-style rounds (heights rescaled by sqrt(wanted/got)) brought the
+  concave-corner peak from 26.6x to 22.8x and medians to 1.1-1.4; more
+  rounds skewed the cove and slot (12 rounds: 11 deg) and cost 100 s.</li>
+<li><strong>Near-wall layer.</strong> Hyperbolic marching folds into a concave corner
+  (the main element's cove step) at any thickness above about a wall cell:
+  its smoothing is raised 31x there, ramped from zero at the wall so the
+  first steps stay normal; a residual fold halves the thickness round it and
+  marches again. A sharp convex corner (the slat cusp, 18 deg) twisted its
+  first cells until the corner's two neighbours were placed equally far
+  (the step is normal to the chord through them). The march's smoothing at
+  the wall tilted the first step 5-8 deg on the slat and main noses; from
+  zero at the wall (except within two nodes of a convex corner, whose fan
+  needs it) the wall is orthogonal to 0.05 deg. The first cell is
+  re-marched until within 1 % of the wall spacing (up to 6 passes; the
+  marching's area smoothing moved it 3-12 %).</li>
+<li><strong>Sharp trailing edges.</strong> A sharp trailing edge is the layer's seam node:
+  the convex-corner test (heading jumps, unwrapped) missed it, the wall got
+  no smoothing there and the layer folded, then was thinned to the floor
+  and refused (every sharp main element with a flap). Turning is taken from
+  each node's two edges instead, and the edge's two neighbours placed equally
+  far, as at the slat cusp. NACA-based sections then build at 22-38 deg.</li>
+<li><strong>Targets not met yet.</strong> Smallest angle 20 deg: 17.4 deg at the
+  main element's concave cove corner (one layer cell), 12.9 deg where the
+  cove narrows into the flap gap (66 cells), 16.4 deg where the slot's left
+  side turns from the gap cut onto the upstream base. Interface growth 1.3:
+  22.8x at the concave corner (the layer is thinned there and the cove's
+  lines fan), 5-7x round the gap; medians 1.1-1.4. Tried and dropped:
+  splitting the cove at its corner (to the downstream nose in proportion, or
+  at its nearest point: slivers of 0.1-7.5 deg), and starting the slot where
+  the channel narrows to three gaps (its left side then ran along the
+  ceiling, parallel to its floor, and folded).</li>
+</ul>
+<h2 id="3d">3D<a class="headerlink" href="#3d" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Face vectors from the diagonals' cross product</strong>, <code>S = (x_c - x_a) x
+  (x_d - x_b) / 2</code>: the vector area of every surface the face's edges bound,
+  so a cell's six vectors sum to zero exactly on warped faces and a
+  collapsed face (a pole) is exactly zero. Volumes <code>(1/3) sum S . x_f</code>
+  equal the trilinear hexahedron's (tested against Gauss quadrature).</li>
+<li><strong>Face gradients: the 2D diamond generalized</strong> (centre-to-centre vector
+  plus the face's two diagonals, node values and positions both averaged
+  from the 8 surrounding centres), not Green-Gauss on a dual cell: exact
+  for linear fields on any hexahedra, the same property and code as 2D.</li>
+<li><strong>The pole is an interface</strong>, <code>i_min</code> facing itself half a turn round the
+  O seam: the ghost across the axis is the diametrically opposite cell. Its
+  faces have zero area, so it only feeds slopes and gradients.</li>
+<li><strong>Plane-reflection ghosts on skewed cells</strong> (walls, symmetry; 2D and 3D):
+  the face state is off by O(h tan theta) on a cell skewed by theta, an
+  O(1) local truncation error. Measured with the 3D MMS on a warped cube:
+  first order in the solution with Dirichlet ghosts placed that way, second
+  order with ghosts at the cells of linearly extrapolated nodes (a point
+  reflection through the face midpoint). Kept for the physical conditions
+  (standard; the M6 wall is within 2 deg of orthogonal except at the sharp
+  trailing edge and the leading-edge seam); the MMS uses the latter.</li>
+<li><strong>3D incidence is in x-z, span y</strong> (TMR's wing grids): <code>freestream_primitive(flow, 3)</code>
+  is <code>M (cos a, 0, sin a)</code>; a 2D grid extruded in z needs the freestream
+  passed explicitly (tests/verification/test_extruded.py does).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

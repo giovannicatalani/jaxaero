@@ -1,0 +1,909 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Compressible Euler, Navier-Stokes and SA RANS on structured grids in JAX, 2D and 3D">
+      
+      
+      
+        <link rel="canonical" href="https://giovannicatalani.github.io/jaxaero/own-airfoil/">
+      
+      
+        <link rel="prev" href="../guide/">
+      
+      
+        <link rel="next" href="../multi-element/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Your own airfoil - JAX-Aero</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#your-own-airfoil" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="JAX-Aero" class="md-header__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            JAX-Aero
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Your own airfoil
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="JAX-Aero" class="md-nav__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    JAX-Aero
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running a case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your own airfoil
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your own airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-coordinate-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The coordinate file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-casejson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. case.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-numericaljson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. numerical.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-check-the-grid-then-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Check the grid, then run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-is-it-converged" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Is it converged?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-a-polar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. A polar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changing-one-thing-without-editing-the-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing one thing without editing the files
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi-element/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-element airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wing-3d/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A 3D wing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equations and method
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev/notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-coordinate-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The coordinate file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-casejson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. case.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-numericaljson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. numerical.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-check-the-grid-then-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Check the grid, then run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-is-it-converged" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Is it converged?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-a-polar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. A polar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changing-one-thing-without-editing-the-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing one thing without editing the files
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="your-own-airfoil">Your own airfoil<a class="headerlink" href="#your-own-airfoil" title="Permanent link">&para;</a></h1>
+<p>This page takes a coordinate file you downloaded or exported and runs it.
+The worked example is <code>examples/clarky_sa</code>: the Clark Y file from the
+<a href="https://m-selig.ae.illinois.edu/ads/coord_database.html">UIUC database</a>,
+used exactly as downloaded.</p>
+<h2 id="1-the-coordinate-file">1. The coordinate file<a class="headerlink" href="#1-the-coordinate-file" title="Permanent link">&para;</a></h2>
+<p>Put the file in a new directory, next to where <code>case.json</code> will go:</p>
+<pre><code>my_airfoil/
+    clarky.dat
+    case.json
+    numerical.json
+</code></pre>
+<p>The reader accepts the usual formats:</p>
+<ul>
+<li><strong>Selig</strong>: a name line, then x y pairs going round the airfoil.</li>
+<li><strong>Lednicer</strong>: a name line, a line with the point counts of the two
+  surfaces, then the upper and the lower surface, each from the leading edge.</li>
+<li><strong>Plain</strong>: two columns, no header.</li>
+</ul>
+<p>Either direction round the contour is fine, and commas are read as spaces.
+The airfoil is scaled to unit chord, with its leading edge at the origin.
+That way a file in millimetres or a file offset from the origin give the
+same grid and the same coefficients as one in chords. Nothing is rotated: set
+the incidence with <code>alpha_deg</code>.</p>
+<p>Most downloaded files have a slightly open trailing edge (0.1 to 0.3 % of
+the chord). A C-grid needs a sharp one, so add <code>"trailing_edge": "close"</code>.
+This moves each surface by a small amount that grows linearly from zero at
+the leading edge to half the gap at the trailing edge. If you want to keep
+the blunt base, use an O-grid instead.</p>
+<h2 id="2-casejson">2. case.json<a class="headerlink" href="#2-casejson" title="Permanent link">&para;</a></h2>
+<pre><code class="language-json">{
+    &quot;general&quot;: {&quot;case_name&quot;: &quot;clarky_sa&quot;},
+    &quot;domain&quot;: {
+        &quot;grid&quot;: &quot;c_grid&quot;,
+        &quot;airfoil&quot;: &quot;clarky.dat&quot;,
+        &quot;trailing_edge&quot;: &quot;close&quot;,
+        &quot;cells_airfoil&quot;: 256,
+        &quot;cells_wake&quot;: 64,
+        &quot;cells_normal&quot;: 96,
+        &quot;wall_spacing&quot;: 5e-6
+    },
+    &quot;freestream&quot;: {&quot;mach&quot;: 0.2, &quot;alpha_deg&quot;: 4.0, &quot;reynolds&quot;: 3e6, &quot;temperature&quot;: 288.15},
+    &quot;material_properties&quot;: {&quot;dynamic_viscosity&quot;: &quot;sutherland&quot;, &quot;sutherland_temperature&quot;: 110.4},
+    &quot;turbulence&quot;: {&quot;model&quot;: &quot;sa_noft2&quot;}
+}
+</code></pre>
+<p>The generated grid has two patches, <code>wall</code> and <code>farfield</code>. With a Reynolds
+number set, the wall defaults to no-slip and the far field to the
+characteristic condition, so <code>boundary_conditions</code> can be left out.</p>
+<p><strong>Which grid.</strong> A C-grid for viscous flow round a sharp trailing edge; an
+O-grid for inviscid flow, or to keep a blunt trailing edge.</p>
+<p><strong>How many cells.</strong> For RANS, 256 round the airfoil, 64 along the wake and
+96 to 128 outward is a reasonable first grid (40 to 50 thousand cells).
+Double <code>cells_airfoil</code>, <code>cells_wake</code> and <code>cells_normal</code> and halve
+<code>wall_spacing</code> to see how much the answer still depends on the grid.</p>
+<p><strong>Wall spacing.</strong> For RANS the first cell should sit at y+ of about 1. A flat
+plate estimate, in chords:</p>
+<pre><code class="language-python">re = 3e6
+cf = 0.026 / re ** (1 / 7)                  # turbulent flat plate skin friction
+wall_spacing = 1 / (re * (cf / 2) ** 0.5) / 2   # y+ = 1, halved for the suction peak
+print(wall_spacing)                         # 4.3e-06
+</code></pre>
+<p>For laminar flow it is the boundary layer you need to resolve: aim for about
+30 cells across it (the laminar example uses 1e-4 at Re 5000).</p>
+<p><strong>Far field.</strong> The default of 100 chords is safe. To bring it closer, add
+the point-vortex correction, which accounts for the lift's far-field
+signature:
+<code>"boundary_conditions": {"farfield": {"type": "far_field", "model": "point_vortex"}}</code>.
+The RAE 2822 validation grid uses it with its boundary 20 to 38 chords away.</p>
+<h2 id="3-numericaljson">3. numerical.json<a class="headerlink" href="#3-numericaljson" title="Permanent link">&para;</a></h2>
+<pre><code class="language-json">{
+    &quot;convective_fluxes&quot;: {&quot;limiter&quot;: &quot;none&quot;},
+    &quot;time_integration&quot;: {&quot;solver&quot;: &quot;implicit&quot;},
+    &quot;implicit&quot;: {&quot;max_relative_update&quot;: 0.2},
+    &quot;convergence&quot;: {&quot;max_iters&quot;: 3000}
+}
+</code></pre>
+<p>Use the implicit solver for any viscous case. The limiter: <code>none</code> for
+subsonic flow without shocks, <code>van_albada</code> for transonic RANS or high lift,
+<code>minmod</code> for inviscid shocks. <code>max_relative_update</code> keeps the first few
+hundred SA steps from overshooting.</p>
+<h2 id="4-check-the-grid-then-run">4. Check the grid, then run<a class="headerlink" href="#4-check-the-grid-then-run" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">jaxaero my_airfoil --check
+</code></pre>
+<p>This builds the grid, prints the quality report and the patches, and
+writes <code>results/clarky_sa/grid.png</code>. It does not solve anything. For the
+Clark Y:</p>
+<pre><code>grid c_grid round clarky.dat: 256 + 2x64 wake x 96 cells, wall spacing 5e-06, far field 100; trailing-edge gap 0.0012 closed: ...
+grid quality: 36864 cells, min area 9.74e-09, min angle 86.7 deg, max growth 1.24, max aspect 2.61e+06; wall: first cell 4.72e-06..5.11e-06, within 3.1 deg of orthogonal; far field &gt;= 99.8 from the walls
+patch 'wall': no_slip_wall, 256 faces
+patch 'farfield': far_field, 576 faces
+body 0: x -0.0000 to 1.0000, y -0.0302 to 0.0914, 256 wall faces
+</code></pre>
+<p>A grid with folded cells (negative area) is refused. Warnings follow the
+report when cells are skewed below 20 degrees or grow by more than 1.5
+between neighbours. These are worth fixing, usually with more cells or a
+smaller <code>leading_edge_spacing</code> / <code>trailing_edge_spacing</code>, but the case still
+runs.</p>
+<p>Then run it:</p>
+<pre><code class="language-bash">jaxaero my_airfoil
+python -m jaxaero.plot my_airfoil/results/clarky_sa
+</code></pre>
+<p>On a 4 GB laptop GPU the Clark Y takes 6 minutes (0.29 s per iteration; an
+A100 is several times faster). It stops after 1160 iterations, once the
+forces have settled:</p>
+<pre><code>settled after 1160 iterations, residual peak 1.704433e-05 -&gt; 6.698344e-09 (3.41 orders from peak)
+CL = +0.801215   CD = +0.011022 (friction +0.007529)   CM = -0.075400
+</code></pre>
+<p>The drag is for a fully turbulent boundary layer: SA has no transition
+model, so expect more drag than a wind tunnel at this Reynolds number.</p>
+<p><img alt="Clark Y wall pressure" src="../figures/cp_clarky.png" /></p>
+<p>The small bumps near the leading edge are in the coordinate file, not the
+flow. The file has 61 points per surface with four or five digits, and its
+curvature jumps between neighbouring points (on the upper surface at x/c
+0.02, 0.08 and 0.16). The solver follows the geometry it is given. If you
+see this in your own results, use a file with more points, or smooth it
+before running.</p>
+<h2 id="5-is-it-converged">5. Is it converged?<a class="headerlink" href="#5-is-it-converged" title="Permanent link">&para;</a></h2>
+<p>The forces are printed every block, and the log ends with the reason the
+run stopped and the orders the residual dropped from its peak. A run whose
+forces have settled (CL, CD and CM each moving less than
+<code>convergence.forces_tol</code>, 1e-4, over the last quarter of the iterations)
+stops by itself and says <code>settled</code>; the residual has then usually dropped
+three to five orders, and the forces would not change in the digits shown
+if you went on. A smaller <code>forces_tol</code> asks for more digits; <code>null</code> turns the
+test off and runs to <code>tol</code> or <code>max_iters</code>. A run that ends at <code>max_iters</code>
+has not settled: raise <code>max_iters</code> first. A residual stuck at two or three
+orders with an oscillating CL usually means a separated or unsteady flow, or
+a grid that is too coarse at the trailing edge.</p>
+<h2 id="6-a-polar">6. A polar<a class="headerlink" href="#6-a-polar" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">python -m jaxaero.polar my_airfoil --alpha -4 12 2
+</code></pre>
+<p>This runs every angle together (on a GPU, as one batch) and writes
+<code>polar.dat</code>, with one row per angle: alpha, CL, CD, friction drag, CM, the
+orders the residual dropped, the iterations, the spread of CL over the last
+quarter of the run, and whether that spread is small enough to call CL
+settled. <code>python -m jaxaero.plot</code> on the polar directory draws it. Near and
+past stall, look at the <code>settled</code> column: a steady solver cannot settle a
+flow that is really unsteady.</p>
+<h2 id="changing-one-thing-without-editing-the-files">Changing one thing without editing the files<a class="headerlink" href="#changing-one-thing-without-editing-the-files" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">jaxaero my_airfoil --set case.freestream.alpha_deg=8 --set case.domain.cells_normal=128
+</code></pre>
+<p>The changed values are saved with the result.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

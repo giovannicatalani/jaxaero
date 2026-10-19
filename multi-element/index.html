@@ -1,0 +1,1170 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Compressible Euler, Navier-Stokes and SA RANS on structured grids in JAX, 2D and 3D">
+      
+      
+      
+        <link rel="canonical" href="https://giovannicatalani.github.io/jaxaero/multi-element/">
+      
+      
+        <link rel="prev" href="../own-airfoil/">
+      
+      
+        <link rel="next" href="../wing-3d/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Multi-element airfoil - JAX-Aero</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#a-multi-element-airfoil" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="JAX-Aero" class="md-header__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            JAX-Aero
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Multi-element airfoil
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="JAX-Aero" class="md-nav__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    JAX-Aero
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running a case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../own-airfoil/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your own airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-element airfoil
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-element airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-grid-file-must-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What the grid file must be
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-casejson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. case.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-check-the-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Check the grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-grid-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the grid is refused
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generated-grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated grids
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Generated grids">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When it applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-coordinate-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The coordinate files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is built
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-grid-is-refused_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the grid is refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-and-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality and runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wing-3d/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A 3D wing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equations and method
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev/notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-grid-file-must-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What the grid file must be
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-casejson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. case.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-check-the-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Check the grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-grid-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the grid is refused
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generated-grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated grids
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Generated grids">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When it applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-coordinate-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The coordinate files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is built
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-grid-is-refused_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the grid is refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-and-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality and runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="a-multi-element-airfoil">A multi-element airfoil<a class="headerlink" href="#a-multi-element-airfoil" title="Permanent link">&para;</a></h1>
+<p>For a slat, main element and flap the solver can generate the grid
+(<code>"grid": "multi_element"</code>, <a href="#generated-grids">below</a>); for any other
+geometry with coves and gaps, make a structured multi-block grid with your
+mesher and point the case at the file. The worked
+example is <code>examples/30p30n_sa</code>: the 30P30N three-element airfoil on JAXA's
+117-block grid (download instructions in <code>data/grids/README.md</code>).</p>
+<h2 id="1-what-the-grid-file-must-be">1. What the grid file must be<a class="headerlink" href="#1-what-the-grid-file-must-be" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Format</strong>: Plot3D (any variant: formatted or binary, single or double
+  precision, 2D, or 3D with one plane used) or CGNS saved in HDF5. Pointwise,
+  ICEM CFD and most structured meshers write one of these.</li>
+<li><strong>Blocks meet node to node.</strong> Interfaces are found by matching coincident
+  block faces, so no connectivity file is needed, but the nodes on both sides
+  of an interface must coincide. Non-matching (patched) interfaces are not
+  supported.</li>
+<li><strong>Every wall closes round its body</strong>, and the outer boundary closes round
+  everything.</li>
+</ul>
+<p>In a CGNS file, boundary names come from the file (family names, else BC
+types). Plot3D has no names, so faces that are not interfaces are named by
+the loop they lie on: the outer loop becomes <code>farfield</code>, and each closed loop
+round a body becomes <code>wall</code>. For other cases, such as a symmetry plane,
+an inflow or an outflow, name faces with box rules in <code>domain.patches</code>
+(the flat-plate example does this).</p>
+<h2 id="2-casejson">2. case.json<a class="headerlink" href="#2-casejson" title="Permanent link">&para;</a></h2>
+<pre><code class="language-json">{
+    &quot;general&quot;: {&quot;case_name&quot;: &quot;30p30n_sa&quot;},
+    &quot;domain&quot;: {
+        &quot;grid&quot;: &quot;file&quot;,
+        &quot;file&quot;: &quot;data/grids/2Ddomain_L1_coarse_r1.p3d&quot;,
+        &quot;coordinate_scale&quot;: 0.05555555555555555
+    },
+    &quot;freestream&quot;: {&quot;mach&quot;: 0.17, &quot;alpha_deg&quot;: 5.5, &quot;reynolds&quot;: 1.71e6, &quot;temperature&quot;: 295.56},
+    &quot;material_properties&quot;: {&quot;dynamic_viscosity&quot;: &quot;sutherland&quot;, &quot;sutherland_temperature&quot;: 110.4},
+    &quot;turbulence&quot;: {&quot;model&quot;: &quot;sa_noft2&quot;}
+}
+</code></pre>
+<p><strong>Units.</strong> The solver works in the length your Reynolds number is based on,
+and the force coefficients use the same length. JAXA's grid is in inches,
+with an 18 inch stowed chord, so <code>coordinate_scale</code> is 1/18. If your grid is
+already in chords, leave it out. If you would rather keep the grid as it is
+and quote coefficients per some other length, set <code>reference_length</code>; the
+Reynolds number is then per that length too.</p>
+<p>The pitching moment is taken about (0.25, 0) in the scaled coordinates.</p>
+<h2 id="3-check-the-grid">3. Check the grid<a class="headerlink" href="#3-check-the-grid" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">jaxaero examples/30p30n_sa --check
+</code></pre>
+<pre><code>grid file 2Ddomain_L1_coarse_r1.p3d: 117 block(s), 63957 cells, 3 body(ies); implicit, hllc, limiter van_albada
+grid quality: 63957 cells, min area 8.64e-10, min angle 34.4 deg, max growth 2.16, ...; far field &gt;= 97.6 from the walls
+  warning: neighbouring cells growing by up to 2.16x (over 1.5)
+patch 'wall': no_slip_wall, 610 faces
+patch 'farfield': far_field, 560 faces
+body 0: x -0.0848 to 0.0188, y -0.1162 to 0.0066, 266 wall faces
+body 1: x 0.0438 to 0.8741, y -0.0546 to 0.0619, 254 wall faces
+body 2: x 0.8714 to 1.1307, y -0.1460 to 0.0218, 90 wall faces
+</code></pre>
+<p>Look at three things. The number of bodies should be the number of elements:
+if it is lower, a wall did not close, usually because two blocks meet with
+nodes that do not coincide. The body extents should be in chords. And
+<code>grid.png</code> should show every element outlined in its own colour:</p>
+<p><img alt="30P30N grid" src="../figures/grid_30p30n.png" /></p>
+<p>Bodies are numbered by their leading edge, from the front: here slat 0,
+main 1, flap 2.</p>
+<h2 id="4-run">4. Run<a class="headerlink" href="#4-run" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">jaxaero examples/30p30n_sa
+</code></pre>
+<p>Use the implicit solver with <code>van_albada</code>; high-lift flows at low Mach
+number converge slowly, so give it several thousand iterations (8000 here).
+The coarsest 30P30N level (63,957 cells) runs its 8000 iterations in 7
+minutes on an A100 (49 ms each); its forces keep moving by a little more
+than the <code>forces_tol</code> bar, so it does not stop earlier. On a small GPU, run
+a grid of this size on a cluster instead. Its block sizes are odd, so
+<code>grid_sequencing</code> refuses it.</p>
+<p>The forces are printed for the whole configuration and for each body. On
+this coarsest level, at 5.5 degrees:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>CL</th>
+<th>CD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>slat (body 0)</td>
+<td>0.151</td>
+<td>-0.065</td>
+</tr>
+<tr>
+<td>main (body 1)</td>
+<td>2.183</td>
+<td>-0.135</td>
+</tr>
+<tr>
+<td>flap (body 2)</td>
+<td>0.453</td>
+<td>0.259</td>
+</tr>
+<tr>
+<td>total</td>
+<td>2.787</td>
+<td>0.059</td>
+</tr>
+<tr>
+<td>JAXA's RANS, for comparison</td>
+<td>2.877</td>
+<td>0.040</td>
+</tr>
+</tbody>
+</table>
+<p>On the third grid level (261 thousand cells) the lift comes within 0.03 %
+of JAXA's. Per-element drag is the difference of large pressure forces and
+depends strongly on the grid.</p>
+<p><code>*_surface.dat</code> lists Cp and Cf body by body, each starting from its
+trailing edge, with a <code>body</code> column to tell them apart.</p>
+<h2 id="when-the-grid-is-refused">When the grid is refused<a class="headerlink" href="#when-the-grid-is-refused" title="Permanent link">&para;</a></h2>
+<ul>
+<li><em>a face coincides with more than one other face</em>: two blocks overlap, or
+  a block is duplicated in the file.</li>
+<li><em>block k folds over</em>: that block has cells of both orientations; fix it in
+  the mesher.</li>
+<li><em>no boundary condition for patch(es) [...]</em>: the file names a boundary the
+  case does not mention, and the name has no default. Add it to
+  <code>boundary_conditions</code>; the message lists the grid's patch names.</li>
+<li><em>a 1-to-1 interface the file declares is not matched</em>: a CGNS file says two
+  faces connect, but their nodes do not coincide.</li>
+</ul>
+<h2 id="generated-grids">Generated grids<a class="headerlink" href="#generated-grids" title="Permanent link">&para;</a></h2>
+<p><code>"grid": "multi_element"</code> builds the multi-block grid of a slat, main element
+and flap from their coordinates alone, in about a minute on a CPU. The
+examples are <code>examples/main_flap_sa</code> (the 30P30N without its slat, one file
+per element) and <code>validation/cases/gen_30p30n_a5p5</code> (the full 30P30N from
+one curve file).</p>
+<h3 id="when-it-applies">When it applies<a class="headerlink" href="#when-it-applies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The arrangement</strong>: a main element with a flap behind it, a slat ahead of
+  it, or both (<code>main</code>+<code>flap</code>, <code>slat</code>+<code>main</code>, <code>slat</code>+<code>main</code>+<code>flap</code>, listed
+  front to back), each trailing edge over the nose of the element behind it,
+  as deployed in a single-slotted high-lift section. Not covered: two slats
+  or two flaps (double- and triple-slotted systems), Krueger flaps, vanes,
+  tabs, or elements side by side; for those, mesh with your own tool and use
+  <code>"grid": "file"</code>.</li>
+<li><strong>Each element</strong> a closed contour that does not cross itself or another
+  element. Sharp or blunt trailing edges (a blunt base of any thickness),
+  smooth or stepped coves, a cusp on the slat: all taken.</li>
+<li><strong>Gaps</strong> wide enough for the near-wall layers: each layer is at least
+  1.5 <code>wall_spacing</code> x <code>layer_cells</code> thick and at most 0.3 of the distance
+  to the nearest other element, so a gap needs at least 5 <code>wall_spacing</code> x
+  <code>layer_cells</code> (0.24 % of the chord at the defaults, 1.5e-5 and 32).</li>
+<li><strong>Units</strong>: coordinates in the length the Reynolds number is per, the
+  section between 0.1 and 10 of it along x; otherwise set
+  <code>coordinate_scale</code>.</li>
+<li><strong>Settings</strong> measured to build (round the 30P30N's, below): flap deflection
+  20 to 40 deg, gap 0.5 to 3 % of the chord, overlap -1 to +0.14 % (+2 %
+  with a 3 % gap); slat deflection 20 to 30 deg, gap 1.5 to 4 %.</li>
+</ul>
+<p>Outside these the grid is refused with the reason (below), never built
+folded.</p>
+<h3 id="the-coordinate-files">The coordinate files<a class="headerlink" href="#the-coordinate-files" title="Permanent link">&para;</a></h3>
+<p>Either <strong>one file per element</strong> (<code>elements[k].file</code>), in any format
+<code>airfoil</code> takes:</p>
+<pre><code>30P30N flap element          &lt;- an optional name line
+1.1278162  -0.1459988        &lt;- x y, one point per line, round the contour
+1.1253447  -0.1449002
+...
+</code></pre>
+<p>Selig (round the contour, starting at a trailing-edge point), Lednicer (the
+two point counts, then the upper and the lower surface from the leading
+edge) or a plain two-column table, in either direction. A blunt trailing
+edge is left open: the file runs from one end of the base round to the
+other, and the base is the straight line between them.</p>
+<p>Or <strong>one curve file</strong> for all elements (<code>domain.file</code>, <code>elements</code> then
+roles only):</p>
+<pre><code>33                           &lt;- a curve: its point count,
+15.730081  0.551473  0.0     &lt;- then its points, x y (a third column is ignored)
+...
+9                            &lt;- the next curve
+...
+</code></pre>
+<p>Curves join end to end, in any order and direction, into closed contours,
+one per element; the elements are taken front to back by their leading
+edges. A blunt base is its own curve (or part of one); it is found as the
+straight piece between the two sharpest corners at the trailing edge.</p>
+<p>In both, the elements are <strong>as deployed</strong>, in one frame, <code>x</code> downstream and
+<code>y</code> up. Corners (points where the contour turns more than 30 deg: a cove
+step, a cusp, a base's corners) are kept as nodes, the surface is splined
+between them, so give the corners as points of the file. A slat or flap may
+be re-placed instead of re-drawn (<code>deflection_deg</code>, <code>gap</code>, <code>overlap</code> below).</p>
+<h3 id="case-keys">Case keys<a class="headerlink" href="#case-keys" title="Permanent link">&para;</a></h3>
+<pre><code class="language-json">&quot;domain&quot;: {
+    &quot;grid&quot;: &quot;multi_element&quot;,
+    &quot;elements&quot;: [{&quot;role&quot;: &quot;main&quot;, &quot;file&quot;: &quot;main.dat&quot;},
+                 {&quot;role&quot;: &quot;flap&quot;, &quot;file&quot;: &quot;flap.dat&quot;, &quot;deflection_deg&quot;: 5.0, &quot;gap&quot;: 0.015}],
+    &quot;wall_spacing&quot;: 1.5e-05,
+    &quot;cells_per_chord&quot;: 150
+}
+</code></pre>
+<ul>
+<li><strong>Re-placing</strong> a slat or flap: <code>deflection_deg</code> rotates it further deployed
+  from its given position (flap trailing edge down about its leading edge,
+  slat leading edge down about its trailing edge), then <code>gap</code> (from the
+  upstream trailing edge to the downstream element) and <code>overlap</code> (along the
+  main element's chord, positive when they overlap) set its position; leave
+  either out to keep it. The main element stays where it is.</li>
+<li><strong>Resolution</strong>: <code>cells_per_chord</code> on the walls (clustered at edges and
+  corners), <code>wall_spacing</code> for the first cell (1.5e-5 chords is y+ ~ 1 at
+  Re 1.71e6), <code>layer_cells</code> and <code>layer_thickness</code> for each element's
+  near-wall layer (thinner in gaps and coves), <code>gap_cells</code> across a gap at
+  least. Every block's cell counts are multiples of <code>even_cells</code> (4: two
+  grid-sequencing levels). Every key: <a href="../case_reference/">the case reference</a>.</li>
+</ul>
+<p>Start high-lift cases from freestream (<code>grid_sequencing</code> 0): coarsened 30P30N
+grids settle on a separated flow (CL 1.5-1.6, CD 0.3-0.4) that the fine grid
+then takes thousands of iterations to wash out.</p>
+<h3 id="what-is-built">What is built<a class="headerlink" href="#what-is-built" title="Permanent link">&para;</a></h3>
+<p><img alt="generated 30P30N grid" src="../figures/grid_generated_30p30n.png" /></p>
+<p>Each element has a near-wall layer, <code>j</code> from its wall; a front block wraps
+the first element's nose, a block runs over the first element and its wake,
+a slot block over each downstream element under the upstream wake (its left
+side the gap), a cove block in each cove, and blocks under the elements,
+split at each cove lip; a ring carries the grid to <code>far_field</code>.
+<code>python scripts/plot_blocks.py CASE --window x0 x1 y0 y1</code> draws the blocks.</p>
+<h3 id="when-the-grid-is-refused_1">When the grid is refused<a class="headerlink" href="#when-the-grid-is-refused_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>message</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>no multi-element template for elements [...]</em></td>
+<td>roles not in one of the three orders, front to back</td>
+</tr>
+<tr>
+<td><em>the section spans ... along x</em></td>
+<td>coordinates in another unit: set <code>coordinate_scale</code></td>
+</tr>
+<tr>
+<td><em>... near-wall layer would be ... thick ...: too thin</em></td>
+<td>a gap narrower than the layers need: lower <code>wall_spacing</code> x <code>layer_cells</code>, or open the gap</td>
+</tr>
+<tr>
+<td><em>... outside the template's envelope: its landmarks lie in the order ...</em></td>
+<td>the elements are not arranged as the template expects (an element not behind the one before it, a cove where none can be)</td>
+</tr>
+<tr>
+<td><em>placing the flap: a gap of ... is out of reach at an overlap of ...</em></td>
+<td>the asked gap and overlap cannot both hold; the message gives the smallest gap there</td>
+</tr>
+<tr>
+<td><em>block 'cove2' folds</em></td>
+<td>a setting past the envelope (a flap overlapping by 2 % of the chord or more under a narrow gap)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="quality-and-runs">Quality and runs<a class="headerlink" href="#quality-and-runs" title="Permanent link">&para;</a></h3>
+<p>On the 30P30N at 150 cells per chord (113k cells): no folded cell; the first
+cell within 1 % of <code>wall_spacing</code> and the walls orthogonal to 0.05 deg away
+from the trailing-edge and corner fans; cells as skewed as 13 deg where the
+main element's cove narrows into the flap gap; neighbouring cells across
+block interfaces within 1.4x of each other (median), up to 23x at the main
+element's cove corner. NACA-based sections (sharp and blunt trailing edges,
+a stepped and a smooth cove, a slat ahead of a plain main element:
+<code>tests/verification/test_highlift_shapes.py</code>) build with no cell skewed
+under 21 deg.</p>
+<p><code>main_flap_sa</code> (113k cells) settles at 0, 5.5 and 9.5 deg in 3760, 3560 and
+6940 iterations (3.4 to 3.8 orders), CL 2.135, 2.803, 3.041, 116 ms an
+iteration on a V100. The generated 30P30N at 5.5 deg: CL 2.535, 2.808,
+2.846 on 75k, 113k and 165k cells, its Cp on JAXA's RANS on all three
+elements (<code>validation/compare_30p30n.py</code>); this code on JAXA's grids: 2.787
+on 64k cells, 2.8756 on 261k.</p>
+<p>The settings round the 30P30N's (<code>validation/highlift_envelope.py</code>): every
+flap deflection from 20 to 40 deg with gaps 0.5 to 3 % and overlaps -1 to
++0.14 % builds (but a 0.5 % gap, out of reach at -1 % overlap), and +2 %
+with a 3 % gap; a 2 % overlap under a narrower gap folds the cove block and
+is refused. Every slat deflection from 20 to 30 deg
+with gaps 1.5 to 4 % builds (under 2.4 % the overlap must come to -1 %: at
+its given -2.4 % the slat cannot come nearer).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

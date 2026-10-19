@@ -1,0 +1,1006 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Compressible Euler, Navier-Stokes and SA RANS on structured grids in JAX, 2D and 3D">
+      
+      
+      
+        <link rel="canonical" href="https://giovannicatalani.github.io/jaxaero/wing-3d/">
+      
+      
+        <link rel="prev" href="../multi-element/">
+      
+      
+        <link rel="next" href="../case_reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>A 3D wing - JAX-Aero</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#a-3d-wing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="JAX-Aero" class="md-header__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            JAX-Aero
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              A 3D wing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="JAX-Aero" class="md-nav__button md-logo" aria-label="JAX-Aero" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    JAX-Aero
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/giovannicatalani/jaxaero" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running a case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../own-airfoil/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your own airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi-element/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-element airfoil
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A 3D wing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A 3D wing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-grid-file-must-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What the grid file must be
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-casejson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. case.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-numericaljson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. numerical.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-check-the-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Check the grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-finer-grids-of-the-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Finer grids of the example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Case reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equations and method
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev/notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-the-grid-file-must-be" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What the grid file must be
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-casejson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. case.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-numericaljson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. numerical.json
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-check-the-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Check the grid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-finer-grids-of-the-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Finer grids of the example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="a-3d-wing">A 3D wing<a class="headerlink" href="#a-3d-wing" title="Permanent link">&para;</a></h1>
+<p>The solver runs 3D grids with the same two JSON files as 2D: the dimension is
+the grid's. It does not generate 3D grids: make a structured grid with your
+mesher and point the case at the file. The worked example is
+<code>examples/onera_m6_sa</code>, the ONERA M6 wing at NASA's Turbulence Modeling
+Resource conditions (case 2308), on a small grid that ships with the example.</p>
+<h2 id="1-what-the-grid-file-must-be">1. What the grid file must be<a class="headerlink" href="#1-what-the-grid-file-must-be" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Format</strong>: Plot3D with three index directions (formatted or binary, single
+  or double precision). CGNS is read in 2D only for now.</li>
+<li><strong>One block.</strong> Multi-block 3D grids are not supported yet.</li>
+<li><strong>What lies on each of its six sides</strong> is found from the coordinates:<ul>
+<li>two opposite sides whose nodes coincide become an interface (the seam of
+  an O-grid round the wing section);</li>
+<li>a side collapsed to a line (every face of zero area) becomes a <strong>pole</strong>,
+  provided it lies round a seam direction with an even number of cells.
+  The rounded tip of the example grid closes this way;</li>
+<li>every other face is named by the box rules of <code>domain.patches</code>
+  (section 2).</li>
+</ul>
+</li>
+<li><strong>Axes</strong>: <code>x</code> along the chord, <code>y</code> along the span, <code>z</code> up. The angle of
+  attack turns the freestream in the <code>x</code>-<code>z</code> plane.</li>
+<li><strong>The wall-normal index should be <code>j</code>.</strong> The implicit solver's
+  preconditioner solves along <code>j</code> lines, which is what makes thin wall cells
+  affordable. A wall on another index has not been tested.</li>
+<li>A block that is left-handed is reversed in <code>k</code> on reading. A folded grid
+  (a cell of non-positive volume) is refused.</li>
+</ul>
+<p>A half model with the root on a symmetry plane, as in the example, is the
+usual set-up.</p>
+<h2 id="2-casejson">2. case.json<a class="headerlink" href="#2-casejson" title="Permanent link">&para;</a></h2>
+<pre><code class="language-json">{
+    &quot;general&quot;: {&quot;case_name&quot;: &quot;onera_m6_sa&quot;},
+    &quot;domain&quot;: {
+        &quot;grid&quot;: &quot;file&quot;,
+        &quot;file&quot;: &quot;om6_strct_16x44x24.ufmt&quot;,
+        &quot;patches&quot;: [
+            {&quot;name&quot;: &quot;symmetry&quot;, &quot;y_max&quot;: 1e-9},
+            {&quot;name&quot;: &quot;wall&quot;, &quot;x_min&quot;: -1.0, &quot;x_max&quot;: 3.0, &quot;y_max&quot;: 3.0, &quot;z_min&quot;: -1.0, &quot;z_max&quot;: 1.0},
+            {&quot;name&quot;: &quot;farfield&quot;}
+        ],
+        &quot;reference_area&quot;: 1.15315084119,
+        &quot;reference_length&quot;: 0.8016729585,
+        &quot;moment_centre&quot;: [0.0, 0.0, 0.0]
+    },
+    &quot;boundary_conditions&quot;: {
+        &quot;wall&quot;: {&quot;type&quot;: &quot;no_slip_wall&quot;},
+        &quot;farfield&quot;: {&quot;type&quot;: &quot;far_field&quot;},
+        &quot;symmetry&quot;: {&quot;type&quot;: &quot;symmetry&quot;}
+    },
+    &quot;freestream&quot;: {&quot;mach&quot;: 0.84, &quot;alpha_deg&quot;: 3.06, &quot;reynolds&quot;: 14.6e6, &quot;temperature&quot;: 540.0},
+    &quot;material_properties&quot;: {&quot;dynamic_viscosity&quot;: &quot;sutherland&quot;, &quot;sutherland_temperature&quot;: 198.6},
+    &quot;turbulence&quot;: {&quot;model&quot;: &quot;sa_noft2&quot;}
+}
+</code></pre>
+<p><strong>Patches.</strong> A Plot3D file has no boundary names, so each boundary face takes
+the name of the first rule whose box contains its midpoint; a bound left out
+is unbounded. Here the root plane <code>y = 0</code> is <code>symmetry</code>, the faces inside a
+box round the wing are <code>wall</code>, and the last rule, with no bounds, takes
+everything left: the far field. A face that matches no rule is an error, so
+end with a rule without bounds.</p>
+<p><strong>Reference values.</strong> <code>reference_area</code> is required in 3D: lift, drag and side
+force are per <code>q_inf * reference_area</code>. For a half model give the half
+model's area. <code>reference_length</code> and <code>moment_centre</code> are for the pitching
+moment: about the <code>y</code> axis through <code>moment_centre</code>, nose-up positive, per
+<code>q_inf * reference_area * reference_length</code>, pressure and friction together.</p>
+<p><strong>Reynolds number.</strong> Per unit length of the grid. The example grid has a root
+chord of 1, so 14.6e6 is the Reynolds number per root chord. Use
+<code>coordinate_scale</code> if your grid is in other units.</p>
+<p>For Euler, leave out <code>reynolds</code>, <code>material_properties</code> and <code>turbulence</code> and
+make the wall a <code>slip_wall</code>.</p>
+<h2 id="3-numericaljson">3. numerical.json<a class="headerlink" href="#3-numericaljson" title="Permanent link">&para;</a></h2>
+<pre><code class="language-json">{
+    &quot;convective_fluxes&quot;: {&quot;riemann_solver&quot;: &quot;hllc&quot;, &quot;limiter&quot;: &quot;van_albada&quot;},
+    &quot;time_integration&quot;: {&quot;solver&quot;: &quot;implicit&quot;},
+    &quot;implicit&quot;: {&quot;max_relative_update&quot;: 0.2},
+    &quot;convergence&quot;: {&quot;max_iters&quot;: 1500, &quot;tol&quot;: 1e-12, &quot;block_iters&quot;: 20}
+}
+</code></pre>
+<p><code>van_albada</code> is the robust choice with a shock. On coarse grids it costs
+accuracy: on the 135,168-cell level of this wing it gave a drag 21% above
+NASA's CFL3D on the same grid. CFL3D runs this case without a limiter and with
+the third-order upwind-biased reconstruction, which here is</p>
+<pre><code class="language-json">&quot;convective_fluxes&quot;: {&quot;riemann_solver&quot;: &quot;hllc&quot;, &quot;limiter&quot;: &quot;none&quot;, &quot;muscl_kappa&quot;: 0.3333333333333333}
+</code></pre>
+<p>With it the same level is within 5.6% in drag and 0.8% in lift, and the
+1,081,344-cell level within 1.74% and 0.19%. Without a limiter the residual
+can stall at a few orders while the forces are steady; judge by the forces.</p>
+<h2 id="4-check-the-grid">4. Check the grid<a class="headerlink" href="#4-check-the-grid" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">jaxaero examples/onera_m6_sa --check
+</code></pre>
+<pre><code>grid file om6_strct_16x44x24.ufmt: 1 block(s), 16896 cells, 1 body(ies); implicit, hllc, limiter van_albada
+grid quality: 16896 cells, min area 1.84e-11, min angle 4.3 deg, max growth 5.42, ...; far field &gt;= 98.3 from the walls
+patch 'wall': no_slip_wall, 384 faces
+patch 'farfield': far_field, 384 faces
+patch 'symmetry': symmetry, 1056 faces
+wall: 384 faces, x 0.0000 to 1.4147, y -0.0000 to 1.5012, z -0.0460 to 0.0460
+</code></pre>
+<p>Check that every patch you expect is there with a plausible number of faces,
+and that the wall's extent is the wing's, in the units of your Reynolds
+number. A seam or a pole does not appear: only the faces left for the rules
+do. (The skewness and growth warnings here come from this very coarse level
+at the tip.) There is no grid picture in 3D.</p>
+<h2 id="5-run">5. Run<a class="headerlink" href="#5-run" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">jaxaero examples/onera_m6_sa
+</code></pre>
+<pre><code>     200  res 4.5504e-05 ( 0.47 orders)  CL = +0.241207   CD = +0.040561 (friction +0.006224)   CM = -0.185453   CY = +0.001046
+     300  res 7.5804e-06 ( 1.25 orders)  CL = +0.226177   CD = +0.039292 (friction +0.005443)   CM = -0.169032   CY = +0.000782
+     460  res 2.9867e-08 ( 3.65 orders)  CL = +0.221072   CD = +0.038973 (friction +0.005306)   CM = -0.163561   CY = +0.000664
+settled after 460 iterations, residual peak 1.343636e-04 -&gt; 2.986654e-08 (3.65 orders from peak)
+</code></pre>
+<p>Three and a half minutes on a laptop GPU (4 GB), 0.33 s per step; the run
+stops once the forces have settled (section 6). <code>CY</code> is the side force. This
+level is far too coarse for the values to mean much (NASA's finest grids give
+CL 0.2693, CD 0.01696): it is there to try the workflow.</p>
+<p>The result directory holds:</p>
+<table>
+<thead>
+<tr>
+<th>file</th>
+<th>content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>*_surface.dat</code></td>
+<td>one row per wall face: its indices <code>i k</code> on the wall, <code>x y z</code>, <code>cp</code>, and the skin-friction vector <code>cf_x cf_y cf_z</code></td>
+</tr>
+<tr>
+<td><code>*_block0.vts</code></td>
+<td>the whole field for <a href="https://www.paraview.org">ParaView</a>: density, velocity, pressure, Mach number per cell</td>
+</tr>
+<tr>
+<td><code>*_fields.npz</code></td>
+<td>the conservative state and the grid nodes</td>
+</tr>
+<tr>
+<td><code>*_residual.dat</code>, <code>*_lift.dat</code>, <code>*_metadata.json</code></td>
+<td>histories, the resolved case and provenance</td>
+</tr>
+</tbody>
+</table>
+<p><code>python -m jaxaero.plot</code> draws 2D results only. For a wing,
+<code>python scripts/plot_wing.py RESULT_DIR</code> draws the pressure on the upper and
+lower surfaces, with the sonic line, and a 3D view:</p>
+<p><img alt="ONERA M6, wall pressure on the example grid" src="../figures/wing_onera_m6.png" /></p>
+<p>(The script assumes the layout of this grid family: the wall on <code>j = 0</code>, <code>i</code>
+along the span, <code>k</code> round the section from the leading edge.)</p>
+<h2 id="6-cost">6. Cost<a class="headerlink" href="#6-cost" title="Permanent link">&para;</a></h2>
+<p>Measured on this wing (SA, case 2308), from freestream to settled forces:</p>
+<table>
+<thead>
+<tr>
+<th>cells</th>
+<th>device</th>
+<th>per step</th>
+<th>steps</th>
+<th>total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16,896</td>
+<td>laptop GPU, 4 GB</td>
+<td>0.33 s</td>
+<td>460</td>
+<td>3.5 min</td>
+</tr>
+<tr>
+<td>135,168</td>
+<td>A100 40 GB</td>
+<td>0.13 s</td>
+<td>1,560</td>
+<td>4.5 min</td>
+</tr>
+<tr>
+<td>1,081,344</td>
+<td>A100 40 GB</td>
+<td>1.32 s</td>
+<td>2,520</td>
+<td>57 min</td>
+</tr>
+<tr>
+<td>1,081,344</td>
+<td>CPU node, 24 cores</td>
+<td>160 s</td>
+<td></td>
+<td>(4.7 days at that rate)</td>
+</tr>
+</tbody>
+</table>
+<p>The 8.65-million-cell level of the family does not fit on a 40 GB GPU.</p>
+<p>Forces are steady after roughly 500 to 2500 steps, more on finer grids. The
+run stops there by itself (<code>settled</code>: CL, CD and CM each vary by less than
+<code>convergence.forces_tol</code>, 1e-4, over the last quarter of the iterations), or
+at <code>tol</code> or <code>max_iters</code>, whichever comes first; results are written at the
+end.</p>
+<p>On a fine grid, <code>"convergence": {"grid_sequencing": 1}</code> (or 2, ...) solves first
+on the grid with every other node, and starts the case's grid from that
+solution: on the 1,081,344-cell level the forces settle within 1e-4 of their
+final values 2.8x sooner in fine-grid steps (620 against 1760). Every cell
+count, and every patch and interface limit, must stay even.</p>
+<h2 id="7-finer-grids-of-the-example">7. Finer grids of the example<a class="headerlink" href="#7-finer-grids-of-the-example" title="Permanent link">&para;</a></h2>
+<p>NASA does not ship the ONERA M6 grids but the program that makes them.
+<code>data/grids/README.md</code> gives the recipe (two Fortran files, a few minutes) and
+the names of the levels: 135,168 and 1,081,344 cells are the ones NASA's
+reference results are quoted on. Point <code>domain.file</code> at a level, or</p>
+<pre><code class="language-bash">jaxaero examples/onera_m6_sa --set case.domain.file=data/grids/onera_m6/om6_strct_32x88x48.ufmt
+</code></pre>
+<h2 id="8-limits">8. Limits<a class="headerlink" href="#8-limits" title="Permanent link">&para;</a></h2>
+<ul>
+<li>One block, Plot3D. No 3D grid generation, no multi-block 3D, no CGNS in 3D.</li>
+<li><code>python -m jaxaero.plot</code> and the <code>--check</code> picture are 2D only.</li>
+<li>Polars (<code>python -m jaxaero.polar</code>) have not been tested in 3D.</li>
+<li>The far field is plain characteristic (no point-vortex correction in 3D):
+  put it far away, as here (100 chords).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
