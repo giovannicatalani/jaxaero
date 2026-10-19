@@ -172,6 +172,18 @@ element's cove narrows into the flap gap; neighbouring cells across block
 interfaces within 1.4x of each other (median), up to 23x at the main
 element's cove corner. The grid builds in about a minute on a CPU.
 
+**Runs.** `main_flap_sa` (113k cells, from freestream) settles at 0, 5.5 and
+9.5 deg in 3760, 3560 and 6940 iterations (3.4 to 3.8 orders), CL 2.135,
+2.803, 3.041; 116 ms an iteration on a V100. Start high-lift cases from
+freestream: coarsened 30P30N grids settle on a separated flow (CL 1.5-1.6,
+CD 0.3-0.4) that the fine grid then takes thousands of iterations to wash
+out. The generated 30P30N at 5.5 deg: CL 2.535, 2.808, 2.846 on 75k, 113k
+and 165k cells (this code on JAXA's grids: 2.787 on 64k, 2.8756 on 261k).
+
+Beyond the 30P30N, `tests/verification/test_highlift_shapes.py` builds
+NACA-based sections with sharp and blunt trailing edges, a stepped and a
+smooth cove, and a slat ahead of a plain main element.
+
 **Settings it takes** (`validation/highlift_envelope.py`, 43 settings round
 the 30P30N's, deflections from the given 30 deg): flap deflection 20 to 40
 deg, gap 0.5 to 3 %c, overlap -1 to +0.14 %c (+2 %c with a 3 %c gap); slat

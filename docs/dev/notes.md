@@ -187,6 +187,12 @@ measures it.
   needs it) the wall is orthogonal to 0.05 deg. The first cell is
   re-marched until within 1 % of the wall spacing (up to 6 passes; the
   marching's area smoothing moved it 3-12 %).
+- **Sharp trailing edges.** A sharp trailing edge is the layer's seam node:
+  the convex-corner test (heading jumps, unwrapped) missed it, the wall got
+  no smoothing there and the layer folded, then was thinned to the floor
+  and refused (every sharp main element with a flap). Turning is taken from
+  each node's two edges instead, and the edge's two neighbours placed equally
+  far, as at the slat cusp. NACA-based sections then build at 22-38 deg.
 - **Targets not met yet.** Smallest angle 20 deg: 17.4 deg at the
   main element's concave cove corner (one layer cell), 12.9 deg where the
   cove narrows into the flap gap (66 cells), 16.4 deg where the slot's left

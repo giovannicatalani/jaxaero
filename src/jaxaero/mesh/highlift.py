@@ -435,14 +435,17 @@ def _wall_nodes(walls, k: int, counts: dict, settings: Settings) -> tuple[np.nda
         index[a] = sum(len(p) for p in s_nodes)
         s_nodes.append(s0 + (s1 - s0) * u[:-1])
     s = np.concatenate(s_nodes)
-    # Either side of a corner, the nearer neighbour's distance: marching steps a
-    # node normal to the chord through its neighbours, along the corner's
-    # bisector only if they are equally far (else a sharp corner's first
-    # cells twist; the slat cusp did, at any layer thickness).
+    # Either side of a corner (or a sharp trailing edge), the nearer
+    # neighbour's distance: marching steps a node normal to the chord through
+    # its neighbours, along the corner's bisector only if they are equally far
+    # (else a sharp corner's first cells twist; the slat cusp did, and a
+    # sharp trailing edge, at any layer thickness).
+    P = wall.perimeter
     for name, i in index.items():
-        if name == "lip" or name.startswith("k"):
-            d = min(s[i] - s[i - 1], s[i + 1] - s[i])
-            s[i - 1], s[i + 1] = s[i] - d, s[i] + d
+        if name == "lip" or name.startswith("k") or (name == "tip" and wall.element.airfoil.sharp):
+            prev, nxt = (i - 1) % len(s), (i + 1) % len(s)               # a sharp tip is node 0: wrap
+            d = min((s[i] - s[prev]) % P, (s[nxt] - s[i]) % P)
+            s[prev], s[nxt] = (s[i] - d) % P, (s[i] + d) % P
     return s, index
 
 
@@ -499,11 +502,10 @@ def _layers(walls, counts, settings: Settings) -> list[_Layer]:
         line = wall.points(s)
         ds = np.diff(np.concatenate([s, [s[0] + wall.perimeter]]))
         t, concave = _layer_thickness(walls, k, line, s, settings)
-        edge = np.roll(line, -1, axis=0) - line
-        heading = np.unwrap(np.arctan2(edge[:, 1], edge[:, 0]))
-        turn = heading - np.roll(heading, 1)
-        turn[0] += 2.0 * np.pi                             # the seam: the loop's lap
-        corner = np.flatnonzero(turn < -np.radians(30.0))  # convex corners, to the right
+        after = np.roll(line, -1, axis=0) - line
+        before = np.roll(after, 1, axis=0)
+        turn = np.arctan2(before[:, 0] * after[:, 1] - before[:, 1] * after[:, 0], np.sum(before * after, axis=1))
+        corner = np.flatnonzero(turn < -np.radians(30.0))  # convex corners, to the right (a sharp TE too)
         fan = np.zeros(len(line), dtype=bool)
         fan[(corner[:, None] + np.arange(-2, 3)[None, :]).ravel() % len(line)] = True
         for _ in range(LAYER_RETRIES + 1):
